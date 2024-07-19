@@ -17,8 +17,13 @@ class policy(nn.Module):
         out = self.actv(out)
         out = self.linear2(out)
         out = self.actv(out)
-        out = self.linear3(out)
-        if not logit:
-            dist = distributions.Categorical(F.softmax(out,dim=1))  
-            out = dist.sample([1]).squeeze()
+        logits  = self.linear3(out)
+        logits  = F.sigmoid(self.linear3(out))
+        #logits = F.softmax(out,dim=1)
+        dist = distributions.Categorical(F.softmax(logits,dim=0))  
+        action  = dist.sample([1]).squeeze()
+        if logit:
+            out =  action, logits
+        else:
+            out = action
         return out

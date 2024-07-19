@@ -29,7 +29,9 @@ class grid:
             sp = (s_couple[0]+ d[0], s_couple[1]+d[1])
             assert(0<=sp[0]*self.Ny+sp[1]<self.Nx*self.Ny)
             s = sp[0]*self.Ny+sp[1]  
-        R = (s!=self.G)*(-1) 
+        #R = (s!=self.G)*(-1) 
+        R = (s==self.G)
+
         return s,R
     def grid(self,s):
         assert(type(s)==int)
@@ -57,7 +59,7 @@ class grid:
                     1:(couples[1]+mouv2)*A
                     }
         newstate = couples2[0]*self.Ny+couples2[1]
-        reward = (newstate!=self.G)*(-1)+(A*(-1)+1)*(-10)
+        reward = (newstate==self.G)#+(A*(-1)+1)*(-10)
         return newstate,reward
     def representation(self,state):
        return  pad_sequence([self.states_encod[0,:,int(i)] for i in state]).permute(1,0)

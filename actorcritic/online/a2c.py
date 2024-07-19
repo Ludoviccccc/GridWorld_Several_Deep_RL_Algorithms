@@ -3,8 +3,9 @@ import torch.nn
 import torch.nn.functional as F
 import os
 import matplotlib.pyplot as plt
+import numpy as np
 
-def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, loadpath,loadopt, freqsave=500, epsilon = 0.1, K = 1, start = 0):
+def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, loadpath,loadopt, freqsave=100, epsilon = 0.1, K = 1, start = 0):
     initial_states = torch.randint(0,env.Nx*env.Ny,(N,))
     #test fonction de politique
     actions = p(env.representation(initial_states))
@@ -17,7 +18,8 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
     for j in range(start,n_epochs+1):
         #step 1
         s = torch.randint(0,env.Nx*env.Ny,(1,))
-        if torch.bernoulli(torch.Tensor([epsilon])):
+        #if torch.bernoulli(torch.Tensor([epsilon])):
+        if False:
             a = torch.randint(0,env.Na,(1,)) 
         else:
             a = p(env.representation(s))
@@ -28,7 +30,9 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
         for i in range(K):
             ap = p(env.representation(sp))
             #step 3 Q update
+            #print("r", r)
             targets = r + env.gamma*Qvalue(env.representation(sp),env.representationaction(ap)).squeeze()#targets computation
+            #print("targets", targets)
             optimizerQ.zero_grad()
             loss = F.mse_loss(Qvalue(env.representation(s),env.representationaction(a)).squeeze(),targets)
             loss.backward()
@@ -37,8 +41,9 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
             #computing negativpseudoloss for policy pi
 
             optimizerpi.zero_grad()
-            api = p(env.representation(s)).detach() 
-            logpi = F.cross_entropy(p(env.representation(s),logit = True),api,weight = None, reduction = 'none' )
+            api, logits_ap = p(env.representation(s), logit = True)
+            
+            logpi = F.cross_entropy(logits_ap,env.representationaction(api),weight = None, reduction = 'none' )
             NegativPseudoLoss = torch.mean(torch.mul(logpi,Qvalue(env.representation(s),env.representationaction(api)).squeeze()))
             NegativPseudoLoss.backward()
             optimizerpi.step()
@@ -51,14 +56,13 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
             print("NegativPseudoLoss",torch.mean(torch.Tensor(listLosspi)))
             print("Loss Q", torch.mean(torch.Tensor(listLossQ)))
             if len(recompense_episodes)>0:
-                print("moyenne recompense", np.mean(recompense_episodes))
-        if j%freqsave==0:
+                print("moyenne nombre iterations", np.mean(recompense_episodes))
             torch.save(p.state_dict(), os.path.join(loadpath,f"pi_load_{j}.pt"))
             torch.save(optimizerpi.state_dict(), os.path.join(loadopt,f"opt_pi_load_{j}.pt"))
             torch.save(Qvalue.state_dict(), os.path.join(loadpath,f"q_load_{j}.pt"))
             torch.save(optimizerQ.state_dict(), os.path.join(loadopt,f"opt_q_load_{j}.pt"))
 
-        if j%1000==0 and j>5000:
+        if j%1000==0 and j>2000:
             recompense_episodes.append(test(p,env, epsilon))
             print("plot")
             plt.figure()
@@ -84,7 +88,7 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
 
 def test(p, env, epsilon):
     i = 0
-    s = 5
+    s = torch.randint(0,env.Na,(1,)).item()
     rewardlist = []
     while True:
         if torch.bernoulli(torch.Tensor([epsilon])):
