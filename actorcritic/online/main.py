@@ -25,8 +25,8 @@ if __name__=="__main__":
     env = grid(nx,ny,G = G, gamma =gamma) 
     p = policy(nx,ny,na)
     Qvalue = Q(nx,ny,na)
-    optimizerpi = optim.Adam(p.parameters(), lr = 1e-2) 
-    optimizerQ = optim.Adam(Qvalue.parameters(), lr = 1e-2) 
+    optimizerpi = optim.Adam(p.parameters(), lr = 1e-3) 
+    optimizerQ = optim.Adam(Qvalue.parameters(), lr = 1e-3) 
     buffer = Buffer()
     N = 20 
     batch_size = 10

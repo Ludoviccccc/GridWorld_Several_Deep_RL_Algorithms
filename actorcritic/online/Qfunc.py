@@ -6,8 +6,8 @@ class Q(nn.Module):
         self.Nx = Nx
         self.Ny = Ny
         self.Na = Na
-        self.linear1 = nn.Linear(self.Ny*self.Nx + Na,32)
-        self.linear2 = nn.Linear(32,16)
+        self.linear1 = nn.Linear(self.Ny*self.Nx + Na,16)
+        self.linear2 = nn.Linear(16,16)
         self.linear3 = nn.Linear(16,1)
         self.actv = nn.ReLU()
     def forward(self, s,a):

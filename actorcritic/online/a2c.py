@@ -18,8 +18,7 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
     for j in range(start,n_epochs+1):
         #step 1
         s = torch.randint(0,env.Nx*env.Ny,(1,))
-        #if torch.bernoulli(torch.Tensor([epsilon])):
-        if False:
+        if torch.bernoulli(torch.Tensor([epsilon])):
             a = torch.randint(0,env.Na,(1,)) 
         else:
             a = p(env.representation(s))
@@ -30,7 +29,6 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
         for i in range(K):
             ap = p(env.representation(sp))
             #step 3 Q update
-            #print("r", r)
             targets = r + env.gamma*Qvalue(env.representation(sp),env.representationaction(ap)).squeeze()#targets computation
             #print("targets", targets)
             optimizerQ.zero_grad()
@@ -44,7 +42,10 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
             api, logits_ap = p(env.representation(s), logit = True)
             
             logpi = F.cross_entropy(logits_ap,env.representationaction(api),weight = None, reduction = 'none' )
-            NegativPseudoLoss = torch.mean(torch.mul(logpi,Qvalue(env.representation(s),env.representationaction(api)).squeeze()))
+            Vs = torch.stack([torch.sum(torch.mul(Qvalue(env.representation([si]*env.Na),env.representationaction(torch.arange(env.Na))).squeeze(),F.softmax(logits_ap,dim=1).squeeze())) for si in s])
+            advantage = Qvalue(env.representation(s),env.representationaction(api)).squeeze()-Vs.detach() 
+            #print("advantage", advantage.shape)
+            NegativPseudoLoss = torch.mean(torch.mul(logpi,advantage))
             NegativPseudoLoss.backward()
             optimizerpi.step()
 
