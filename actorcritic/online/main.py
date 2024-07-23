@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 if __name__=="__main__":
     train = True
     start =0
-    epsilon = 0.0
+    epsilon = 0.1
     gamma = .9
     nx = 4
     ny = 4
@@ -28,8 +28,8 @@ if __name__=="__main__":
     optimizerpi = optim.Adam(p.parameters(), lr = 1e-3) 
     optimizerQ = optim.Adam(Qvalue.parameters(), lr = 1e-3) 
     buffer = Buffer()
-    N = 20 
-    batch_size = 10
+    N = 3 
+    batch_size = 2
     n_epochs = 100000
     loadpath = "loads"
     loadopt = "opt"

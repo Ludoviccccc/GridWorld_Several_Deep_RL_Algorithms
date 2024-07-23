@@ -42,7 +42,7 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
             api, logits_ap = p(env.representation(s), logit = True)
             
             logpi = F.cross_entropy(logits_ap,env.representationaction(api),weight = None, reduction = 'none' )
-            Vs = torch.stack([torch.sum(torch.mul(Qvalue(env.representation([si]*env.Na),env.representationaction(torch.arange(env.Na))).squeeze(),F.softmax(logits_ap,dim=1).squeeze())) for si in s])
+            Vs = torch.stack([torch.sum(torch.mul(Qvalue(env.representation([si]*env.Na),env.representationaction(torch.arange(env.Na))).squeeze(),F.softmax(logits_ap,dim=1).squeeze().detach())) for si in s])
             advantage = Qvalue(env.representation(s),env.representationaction(api)).squeeze()-Vs.detach() 
             #print("advantage", advantage.shape)
             NegativPseudoLoss = torch.mean(torch.mul(logpi,advantage))
