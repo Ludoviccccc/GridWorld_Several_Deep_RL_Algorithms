@@ -1,3 +1,1 @@
-j'implémente une version offpolicy de l'algorithme actor critic sur une grille.
-Dans cet environement un agent se déplace et doit atteindre le point G.
-Le travail est encore en cours
+jeu du chat et de la souris avec un algo de qlearning basique. Le chat recoit une recompense de 0 lorsque qu'il n'attrape pas la souris et une récompense de 1 lorsqu'il l'attrape. La souris recoit une récompense de -1 lorsqu'elle se fait attraper.
