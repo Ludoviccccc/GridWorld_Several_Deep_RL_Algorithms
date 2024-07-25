@@ -8,7 +8,7 @@ class grid:
     """
     Envirnonement grille sur laquelle se deplace l'agent jusqu'à atteindre le point G
     """
-    def __init__(self,Nx,Ny, G = 50,gamma = .9,S = 3,epsilon=0.05):
+    def __init__(self,Nx,Ny, G = 50,gamma = .9,S = 3,C= 12,epsilon=0.05):
         assert(0<=G<Nx*Ny)
         self.actions = [(0,1), (0, -1), (1, 0), (-1, 0)]
         self.epsilon = epsilon
@@ -22,29 +22,35 @@ class grid:
         self.C = C
         self.states_encod = torch.eye(self.Nx*self.Ny).unsqueeze(0)
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
-    def transition_cat(self,a):
-        self.C = self.transition(a,self.C)
-    def transition_souris(self,a):
-        self.S = self.transition(a,self.S)
+    def reset(self):
+        self.S = torch.randint(0,self.Nx*self.Ny,(1,))
+        self.C = torch.randint(0,self.Nx*self.Ny,(1,))
+#    def transition_chat(self,a):
+#        assert(0<=sp[0]*self.Ny+sp[1]<self.Nx*self.Ny)
+#        out = sp[0]*self.Ny+sp[1]  
+#        return out
     def transition(self,a,s):
         assert(0<=s<self.Nx*self.Ny)
         d = self.actions[a]
-        s_couple = (s//self.Ny,s%self.Ny)
+        s_couple = (s//self.Ny, s%self.Ny)
         if self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0:
             sp = (s_couple[0]+ d[0], s_couple[1]+d[1])
             assert(0<=sp[0]*self.Ny+sp[1]<self.Nx*self.Ny)
-            out = sp[0]*self.Ny+sp[1]  
-        return out
-    def reward_cat(self):
-        return self.S ==self.C:
-    def reward_souris(self):
-        return (-1)*self.S ==self.C:
-    def grid(self,s):
-        assert(type(s)==int)
-        assert(0<=s<=self.Nx*self.Ny)
+            s_out = sp[0]*self.Ny+sp[1]
+            return s_out
+        return s
+    def reward_chat(self,S,C):
+        return S == C
+    def reward_souris(self,S,C):
+        return (-1)*(S == C)
+    def grid(self,s_souris,s_chat):
+        #assert(type(s)==int)
+        #assert(0<=s<=self.Nx*self.Ny)
         T = np.zeros((self.Nx,self.Ny))
-        T[self.G//self.Ny, self.G%self.Ny] = 6
-        T[s//self.Ny, s%self.Ny] = 1
+        #T[self.G//self.Ny, self.G%self.Ny] = 6
+        T[s_souris//self.Ny, s_souris%self.Ny] = 1
+        T[s_chat//self.Ny, s_chat%self.Ny] = -1
+        #T[s//self.Ny, s%self.Ny] = 1
         print(T)
     def tensor_state(self,s):
         return self.states_encod[:,:,s]
@@ -67,7 +73,9 @@ class grid:
         newstate = couples2[0]*self.Ny+couples2[1]
         reward = (newstate==self.G)#+(A*(-1)+1)*(-10)
         return newstate,reward
-    def representation(self,state,c=True):
-        out = 2*pad_sequence([self.states_encod[0,:,int(i)] for i in state]).permute(1,0)-1
+    def representation(self,s,c):
+        out1 = (-1)*pad_sequence([self.states_encod[0,:,int(i)] for i in c]).permute(1,0)
+        out2 =      pad_sequence([self.states_encod[0,:,int(i)] for i in s]).permute(1,0)
+        return out1+out2
     def representationaction(self,action):
-       return  pad_sequence([self.actions_encod[0,:,int(i)] for i in action]).permute(1,0)
+        return  pad_sequence([self.actions_encod[0,:,int(i)] for i in action]).permute(1,0)
