@@ -19,12 +19,11 @@ if __name__=="__main__":
     gamma = .9
     nx = 5
     ny = 5
-    na = 4
     lr = 1e-2
     env = grid(nx,ny, gamma =gamma) 
 
-    Qvalue_chat = Q(nx,ny,na)
-    Qvalue_souris = Q(nx,ny,na)
+    Qvalue_chat = Q(nx,ny,env.Na)
+    Qvalue_souris = Q(nx,ny,env.Na)
     optimizerQ_chat = optim.Adam(Qvalue_chat.parameters(), lr = lr) 
     optimizerQ_souris = optim.Adam(Qvalue_souris.parameters(), lr = lr) 
     N = 20 

@@ -6,7 +6,7 @@ import sys
 from policy import policy
 from Qfunc import Q
 from buffer import Buffer
-sys.path.append("../env")
+#sys.path.append("../env")
 from env import grid
 import os
 from qlearning import qlearn, test
@@ -14,12 +14,12 @@ import matplotlib.pyplot as plt
 
         
 if __name__=="__main__":
-    train = True
+    train = False
     testmode = True
-    start =0
+    start =100000
     epsilon = 0.1
     gamma = .9
-    nx = 9
+    nx = 15
     ny = 9
     G = 10
     na = 4
@@ -41,6 +41,9 @@ if __name__=="__main__":
 
     if train:
         qlearn(Qvalue,optimizerQ,env, n_epochs, loadpath,loadopt, epsilon, start = 0)
+        """
+        Il faut que la negativ pseudo loss decroisse en avec le nombre d'epochs, ce qui est bien le cas
+        """
         plt.figure()
         plt.plot(listLosspi, label="Negativ pseudo loss")
         plt.legend()

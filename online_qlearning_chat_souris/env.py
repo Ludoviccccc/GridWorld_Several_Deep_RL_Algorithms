@@ -9,7 +9,12 @@ class grid:
     Envirnonement grille sur laquelle se deplace l'agent jusqu'à atteindre le point G
     """
     def __init__(self,Nx,Ny,gamma = .9,S = 3,C= 12,epsilon=0.05):
-        self.actions = [(0,1), (0, -1), (1, 0), (-1, 0)]
+        self.actions = [(0,1), (0, -1), (1, 0), (-1, 0),(1,1),(1,-1),(-1,-1),(-1,1)]
+        self.table_fromage = torch.zeros((Nx,Ny)) 
+        self.fromage = torch.randn((3,2))
+        for f in self.fromage:
+            print(f)
+            self.table_fromage[int(f[0]),int(f[1])] = 1
         self.epsilon = epsilon
         self.Na = len(self.actions)
         self.Nx = Nx
@@ -38,6 +43,12 @@ class grid:
         reward = (s_out==s_souris)
         return reward
 
+    def reward_souris(self,s_out,s_chat):
+        reward = (s_out==s_chat)*(-10)
+        #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
+        #    reward+=5
+        #self.table_fromage[s_out[0],s_out[1]]=0
+        return reward
     def transition_souris(self,a,s,s_chat):
         assert(0<=s<self.Nx*self.Ny)
         d = self.actions[a]
@@ -49,9 +60,6 @@ class grid:
         else:
             s_out = s
         return s_out
-    def reward_souris(self,s_out,s_chat):
-        reward = (s_out==s_chat)*(-1)
-        return reward
     def grid(self,s_souris,s_chat):
         T = np.zeros((self.Nx,self.Ny))
         T[s_souris//self.Ny, s_souris%self.Ny] = 1

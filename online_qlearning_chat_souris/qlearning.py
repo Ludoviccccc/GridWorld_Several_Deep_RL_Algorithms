@@ -23,6 +23,7 @@ def qlearn(Qvalue_chat,Qvalue_souris,optimizerQ_chat,optimizerQ_souris,env, n_ep
     recompense_souris = []
     for j in range(start,n_epochs+1):
         s_souris = torch.randint(0,env.Nx*env.Ny,(1,))
+        #print("s_souris", s_souris)
         s_chat = torch.randint(0,env.Nx*env.Ny,(1,))
         #step 1
         if torch.bernoulli(torch.Tensor([epsilon])):

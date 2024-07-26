@@ -26,12 +26,11 @@ def qlearn(Qvalue,optimizerQ,env, n_epochs, loadpath,loadopt, freqsave=100, epsi
             loss.backward()
             optimizerQ.step()
             listLossQ.append(loss.detach().to("cpu"))
-        if j%500==0:
+        if j%100==0:
             print("epochs", j,f"/{n_epochs}")
             print("Loss Q", torch.mean(torch.Tensor(listLossQ)))
             if len(recompense_episodes)>0:
                 print("moyenne nombre iterations", np.mean(recompense_episodes))
-        if j%freqsave==0:
             torch.save(Qvalue.state_dict(), os.path.join(loadpath,f"q_load_{j}.pt"))
             torch.save(optimizerQ.state_dict(), os.path.join(loadopt,f"opt_q_load_{j}.pt"))
 
@@ -49,6 +48,7 @@ def qlearn(Qvalue,optimizerQ,env, n_epochs, loadpath,loadopt, freqsave=100, epsi
             plt.legend()
             plt.savefig("Qloss")
             plt.close()
+    return None 
 
 def test(Qvalue, env, epsilon, plot = False):
     i = 0

@@ -10,7 +10,7 @@ class grid:
     """
     def __init__(self,Nx,Ny, G = 50,gamma = .9,S = 3,epsilon=0.05):
         assert(0<=G<Nx*Ny)
-        self.actions =  [(0,1), (0, -1), (1, 0), (-1, 0),(1,1),(1,-1),(-1,-1),(-1,1)] 
+        self.actions = [(0,1), (0, -1), (1, 0), (-1, 0),(1,1),(1,-1),(-1,-1),(-1,1)]
         self.epsilon = epsilon
         self.Na = len(self.actions)
         self.Nx = Nx
