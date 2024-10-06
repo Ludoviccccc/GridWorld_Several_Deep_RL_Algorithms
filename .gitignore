@@ -1,0 +1,2 @@
+# ne pas prendre compte les fichiers de sauvegarde .pt
+*.pt

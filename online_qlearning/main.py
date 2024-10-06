@@ -5,7 +5,7 @@ from torch.nn.utils.rnn import pad_sequence
 import sys
 from policy import policy
 from Qfunc import Q
-from buffer import Buffer
+#from buffer import Buffer
 sys.path.append("../env")
 from env import grid
 import os
@@ -14,39 +14,32 @@ import matplotlib.pyplot as plt
 
         
 if __name__=="__main__":
-    train = True
+    train = False
     testmode = True
-    start =0
+    start = 10000
     epsilon = 0.1
     gamma = .9
-    nx = 9
-    ny = 9
+    nx = 5
+    ny = 5
     G = 10
-    na = 4
-    env = grid(nx,ny,G = G, gamma =gamma) 
-
+    ob = [ 6, 19, 18,  8]
+    env = grid(nx,ny,G = G, obstacles_encod = ob,gamma =gamma) 
     Qvalue = Q(nx,ny,env.Na)
     lr = 1e-3
     optimizerQ = optim.Adam(Qvalue.parameters(), lr = lr) 
     N = 20 
     batch_size = 10
-    n_epochs = 100000
+    n_epochs = 10000
 
     loadpath = "loads"
     loadopt = "opt"
 
     if start>0:
-        Qvalue.load_state_dict(torch.load(os.path.join(loadpath,f"q_load_{start}.pt")))
-        optimizerQ.load_state_dict(torch.load(os.path.join(loadopt,f"opt_q_load_{start}.pt")))
+        Qvalue.load_state_dict(torch.load(os.path.join(loadpath,f"q_load_{start}.pt") ,weights_only = True))
+        optimizerQ.load_state_dict(torch.load(os.path.join(loadopt,f"opt_q_load_{start}.pt") ,weights_only = True))
 
     if train:
-        qlearn(Qvalue,optimizerQ,env, n_epochs, loadpath,loadopt, epsilon, start = 0)
-        plt.figure()
-        plt.plot(listLosspi, label="Negativ pseudo loss")
-        plt.legend()
-        plt.savefig("loss/NegativPseudoLossPi")
-        plt.show()
-
+        qlearn(Qvalue,optimizerQ,env, n_epochs, loadpath,loadopt, epsilon = epsilon, start = 0)
     if testmode:
         iterations = test(Qvalue, env, epsilon, plot = True)
         print("nombre d'iterations", iterations)

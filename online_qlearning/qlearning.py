@@ -8,7 +8,11 @@ import numpy as np
 def qlearn(Qvalue,optimizerQ,env, n_epochs, loadpath,loadopt, freqsave=100, epsilon = 0.1, K = 1, start = 0):
     listLossQ = []
     recompense_episodes = []
+    nb_iteration_episodes = []
+    print("K", K)
+    print("freqsave", freqsave)
     for j in range(start,n_epochs+1):
+
         #step 1
         s = torch.randint(0,env.Nx*env.Ny,(1,))
         if torch.bernoulli(torch.Tensor([epsilon])):
@@ -30,18 +34,28 @@ def qlearn(Qvalue,optimizerQ,env, n_epochs, loadpath,loadopt, freqsave=100, epsi
             print("epochs", j,f"/{n_epochs}")
             print("Loss Q", torch.mean(torch.Tensor(listLossQ)))
             if len(recompense_episodes)>0:
-                print("moyenne nombre iterations", np.mean(recompense_episodes))
+                #print("recompense", np.mean(recompense_episodes))
+                print("dernier retour", recompense_episodes[-1])
+                #print(recompense_episodes)
         if j%freqsave==0:
             torch.save(Qvalue.state_dict(), os.path.join(loadpath,f"q_load_{j}.pt"))
             torch.save(optimizerQ.state_dict(), os.path.join(loadopt,f"opt_q_load_{j}.pt"))
 
-        if j%1000==0 and j>2000:
-            recompense_episodes.append(test(Qvalue,env, epsilon))
+        if j%100==0 and j>1000:
+            retour, nb = test(Qvalue,env, epsilon)
+            recompense_episodes.append(retour)
+            nb_iteration_episodes.append(nb)
             print("plot")
             plt.figure()
-            plt.semilogy(recompense_episodes, label="nombre d'iterations pour que l'agent reuisse")
+            plt.plot(recompense_episodes, label="retour")
             plt.legend()
-            plt.savefig("recompense")
+            plt.savefig("retour")
+            plt.close()
+
+            plt.figure()
+            plt.semilogy(nb_iteration_episodes, label="nb iteration")
+            plt.legend()
+            plt.savefig("nb")
             plt.close()
 
             plt.figure()
@@ -51,6 +65,7 @@ def qlearn(Qvalue,optimizerQ,env, n_epochs, loadpath,loadopt, freqsave=100, epsi
             plt.close()
 
 def test(Qvalue, env, epsilon, plot = False):
+    #la fonction renvoie le retour, nombre iterations pour finir
     i = 0
     s = torch.randint(0,env.Nx*env.Ny,(1,)).item()
     rewardlist = []
@@ -67,4 +82,6 @@ def test(Qvalue, env, epsilon, plot = False):
         rewardlist.append(R)
         if s==env.G:
             break
-    return i
+    #print(rewardlist)
+    #print("sortie", sum(rewardlist))
+    return sum(rewardlist),i

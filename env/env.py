@@ -8,9 +8,10 @@ class grid:
     """
     Envirnonement grille sur laquelle se deplace l'agent jusqu'à atteindre le point self.G
     """
-    def __init__(self,Nx,Ny, G = 50,gamma = .9,S = 3,epsilon=0.05):
+    def __init__(self,Nx,Ny, G = 50,gamma = .9,S = 3,epsilon=0.05, obstacles_encod = torch.Tensor([])):
         assert(0<=G<Nx*Ny)
-        self.actions = [(0,1), (0, -1), (1, 0), (-1, 0)]
+        self.actions = [(0,1), (0, -1), (1, 0), (-1, 0),
+                        (1,1),(-1,1),(1,-1),(-1,-1)]
         self.epsilon = epsilon
         self.Na = len(self.actions)
         self.Nx = Nx
@@ -18,27 +19,43 @@ class grid:
         self.R = -1
         self.G = G
         self.gamma = gamma
-        self.S = S
+        #self.S = S
         self.states_encod = torch.eye(self.Nx*self.Ny).unsqueeze(0)
+        self.obstacles_encod = obstacles_encod
+        oo = [j for j in range(self.Nx*self.Ny) if not (j in self.obstacles_encod)]
+        self.S = oo[np.random.randint(0,len(oo))]
+        #placer obstacles
+
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
     def transition(self,a,s):
         assert(0<=s<self.Nx*self.Ny)
         d = self.actions[a]
         s_couple = (s//self.Ny, s%self.Ny)
-        if self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0:
-            sp = (s_couple[0]+ d[0], s_couple[1]+d[1])
-            assert(0<=sp[0]*self.Ny+sp[1]<self.Nx*self.Ny)
-            s = sp[0]*self.Ny+sp[1]  
-        #R = (s!=self.G)*(-1) 
-        R = (s==self.G)
 
+        sp = (s_couple[0]+ d[0], s_couple[1]+d[1])
+        s_temp = sp[0]*self.Ny+sp[1]  
+
+
+        #if self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0:
+        condition = self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0# and not(s_couple[0]+ d[0] in self.obstacles_encod 
+        condition = self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0 and not(s_temp in self.obstacles_encod)
+        if condition:
+            assert(0<=sp[0]*self.Ny+sp[1]<self.Nx*self.Ny)
+            s = s_temp
+            R = torch.Tensor([(s==self.G)*1.0])
+        else:
+            R=torch.Tensor([-1])# la recompense est -1 si l'agent essai de sortir de la grille
+            #R = -1
         return s,R
     def grid(self,s):
         assert(type(s)==int)
         assert(0<=s<=self.Nx*self.Ny)
-        T = np.zeros((self.Nx,self.Ny))
+        T = torch.zeros((self.Nx,self.Ny))
         T[self.G//self.Ny, self.G%self.Ny] = 6
-        T[s//self.Ny, s%self.Ny] = 1
+        T[s//self.Ny, s%self.Ny] = 11
+        for p in self.obstacles_encod:
+            #print("p",p)
+            T[p//self.Ny, p%self.Ny] = -1
         print(T)
     def tensor_state(self,s):
         return self.states_encod[:,:,s]
@@ -59,7 +76,9 @@ class grid:
                     1:(couples[1]+mouv2)*A
                     }
         newstate = couples2[0]*self.Ny+couples2[1]
-        reward = (newstate==self.G)#+(A*(-1)+1)*(-10)
+        reward = (newstate==self.G) +(A*(-1)+1)*(-10)
+        #a l'interieur 1 dans A et 0 dans A*(-1)+1 --> 0
+        #a l'exterieur 0 dans A et 1 dans A*(-1)+1 --> -10
         return newstate,reward
     def representation(self,state):
        return  pad_sequence([self.states_encod[0,:,int(i)] for i in state]).permute(1,0)
