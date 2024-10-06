@@ -24,7 +24,7 @@ if __name__=="__main__":
     batch_size = 10
     M = 100
     N = 100
-    K = 5
+    K = 5 #nombre iterations descente de gradient pour le meme batch (s,a,r,s')
     loadpath = "loads"
     loadopt = "opt"
     maxsize = 100
