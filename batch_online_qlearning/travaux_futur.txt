@@ -1,0 +1,1 @@
+Calcul des valeurs de la fonction Q et calcul du retour obtenu, et comparer les courbes obtenues en fonction des itérations lors de l'apprentissage.
