@@ -3,17 +3,18 @@ from torch import distributions
 import torch.nn as nn
 import torch.nn.functional as F
 class policy(nn.Module):
-    def __init__(self, Nx,Ny, Na):
+    def __init__(self, env):
         super(policy,self).__init__()
-        self.Nx = Nx
-        self.Ny = Ny
-        self.Na = Na
+        self.Nx = env.Nx
+        self.Ny = env.Ny
+        self.Na = env.Na
+        self.env = env
         self.linear1 = nn.Linear(self.Ny*self.Nx,64)
         self.linear2 = nn.Linear(64,32)
         self.linear3 = nn.Linear(32,self.Na)
         self.actv = nn.ReLU()
     def forward(self, x, logit =False):
-        out = self.linear1(x)
+        out = self.linear1(self.env.representation(x))
         out = self.actv(out)
         out = self.linear2(out)
         out = self.actv(out)

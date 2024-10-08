@@ -35,8 +35,6 @@ class grid:
         sp = (s_couple[0]+ d[0], s_couple[1]+d[1])
         s_temp = sp[0]*self.Ny+sp[1]  
 
-
-        #if self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0:
         condition = self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0# and not(s_couple[0]+ d[0] in self.obstacles_encod 
         condition = self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0 and not(s_temp in self.obstacles_encod)
         if condition:
@@ -70,13 +68,13 @@ class grid:
         "a un est un iterable de valeurs scalaires"
         "s un est un iterable de valeurs scalaires"
         couples = {0:s//self.Ny,1:s%self.Ny}
-        mouv1,mouv2 = self.representation_action(a)
-        A =(couples[0]+mouv1>=0)*(couples[0]+mouv1<self.Nx)*(couples[1]+mouv2>=0)*(couples[1]+mouv2<self.Ny)
-        couples2 = {0:(couples[0]+mouv1)*A,
-                    1:(couples[1]+mouv2)*A
+        mouv0,mouv1 = self.representation_action(a)
+        A =(couples[0]+mouv0>=0)*(couples[0]+mouv0<self.Nx)*(couples[1]+mouv1>=0)*(couples[1]+mouv1<self.Ny)
+        couples2 = {0:(couples[0]+mouv0*A),
+                    1:(couples[1]+mouv1*A)
                     }
         newstate = couples2[0]*self.Ny+couples2[1]
-        reward = (newstate==self.G) +(A*(-1)+1)*(-10)
+        reward = (newstate==self.G) +(A*(-1)+1)*(-1)
         #a l'interieur 1 dans A et 0 dans A*(-1)+1 --> 0
         #a l'exterieur 0 dans A et 1 dans A*(-1)+1 --> -10
         return newstate,reward

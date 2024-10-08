@@ -8,7 +8,7 @@ import numpy as np
 def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, loadpath,loadopt, freqsave=100, epsilon = 0.1, K = 1, start = 0):
     initial_states = torch.randint(0,env.Nx*env.Ny,(N,))
     #test fonction de politique
-    actions = p(env.representation(initial_states))
+    actions = p(initial_states)
     #test fonction de transition
     new_state,reward = env.transitionvec(actions,initial_states)
     buffer.store(initial_states,actions,new_state,reward)
@@ -21,30 +21,27 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
         if torch.bernoulli(torch.Tensor([epsilon])):
             a = torch.randint(0,env.Na,(1,)) 
         else:
-            a = p(env.representation(s))
+            a = p(s)
         sp,r = env.transition(a,s)
         buffer.store(s,torch.Tensor([a]),sp,r)
         #step 2
         s,a,sp,r = buffer.sample(batch_size)
         for i in range(K):
-            ap = p(env.representation(sp))
+            ap = p(sp)
             #step 3 Q update
-            targets = r + env.gamma*Qvalue(env.representation(sp),env.representationaction(ap)).squeeze()#targets computation
-            #print("targets", targets)
+            targets = r + env.gamma*Qvalue(sp,ap).squeeze()
+            #targets computation
             optimizerQ.zero_grad()
-            loss = F.mse_loss(Qvalue(env.representation(s),env.representationaction(a)).squeeze(),targets)
+            loss = F.mse_loss(Qvalue(s,a).squeeze(),targets)
             loss.backward()
             optimizerQ.step()
             #step 4 and 5
             #computing negativpseudoloss for policy pi
-
             optimizerpi.zero_grad()
-            api, logits_ap = p(env.representation(s), logit = True)
-            
+            api, logits_ap = p(s, logit = True)
             logpi = F.cross_entropy(logits_ap,env.representationaction(api),weight = None, reduction = 'none' )
-            Vs = torch.stack([torch.sum(torch.mul(Qvalue(env.representation([si]*env.Na),env.representationaction(torch.arange(env.Na))).squeeze(),F.softmax(logits_ap,dim=1).squeeze().detach())) for si in s])
-            advantage = Qvalue(env.representation(s),env.representationaction(api)).squeeze()-Vs.detach() 
-            #print("advantage", advantage.shape)
+            Vs = torch.stack([torch.sum(torch.mul(Qvalue([si]*env.Na,torch.arange(env.Na)).squeeze(),F.softmax(logits_ap,dim=1).squeeze().detach())) for si in s])
+            advantage = Qvalue(s,api).squeeze()-Vs.detach() 
             NegativPseudoLoss = torch.mean(torch.mul(logpi,advantage))
             NegativPseudoLoss.backward()
             optimizerpi.step()
@@ -64,7 +61,7 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
             torch.save(optimizerQ.state_dict(), os.path.join(loadopt,f"opt_q_load_{j}.pt"))
 
         if j%1000==0 and j>2000:
-            recompense_episodes.append(test(p,env, epsilon))
+            recompense_episodes.append(testfunc(p,env, epsilon))
             print("plot")
             plt.figure()
             plt.semilogy(recompense_episodes, label="nombre d'iterations pour que l'agent reuisse")
@@ -87,7 +84,7 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
 
 
 
-def test(p, env, epsilon):
+def testfunc(p, env, epsilon, plot = False):
     i = 0
     s = torch.randint(0,env.Na,(1,)).item()
     rewardlist = []
@@ -95,11 +92,14 @@ def test(p, env, epsilon):
         if torch.bernoulli(torch.Tensor([epsilon])):
             a = torch.randint(0,env.Na,(1,)) 
         else:
-            a  = p(env.representation([s]))
+            a  = p([s])
         sp,R = env.transition(a,s)
         s = sp
         i+=1
         rewardlist.append(R)
+        if plot:
+            env.grid(s)
+            print("")
         if s==env.G:
             break
     return i
