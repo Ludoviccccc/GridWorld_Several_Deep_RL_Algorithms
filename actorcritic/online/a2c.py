@@ -6,15 +6,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, loadpath,loadopt, freqsave=100, epsilon = 0.1, K = 1, start = 0):
-    initial_states = torch.randint(0,env.Nx*env.Ny,(N,))
-    #test fonction de politique
-    actions = p(initial_states)
-    #test fonction de transition
-    new_state,reward = env.transitionvec(actions,initial_states)
-    buffer.store(initial_states,actions,new_state,reward)
+
+    def collection(M):
+        #choose some policy for the collection like the greedy one
+        init_samp = {"state": [],
+                     "action": [],
+                     "new_state":[],
+                     "reward": []}
+        init_samp["state"] = torch.randint(0,env.Nx*env.Ny,(M,))
+        #init_samp["action"]  = Qvalue.amax_epsilon(init_samp["state"], epsilon)
+        init_samp["action"]  =  p(init_samp["state"])
+        init_samp["new_state"], init_samp["reward"] = env.transitionvec(init_samp["action"], init_samp["state"])
+        buffer.store(init_samp)
     listLosspi = []
     listLossQ = []
     recompense_episodes = []
+    collection(batch_size)
+
     for j in range(start,n_epochs+1):
         #step 1
         s = torch.randint(0,env.Nx*env.Ny,(1,))
@@ -23,25 +31,36 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
         else:
             a = p(s)
         sp,r = env.transition(a,s)
-        buffer.store(s,torch.Tensor([a]),sp,r)
+        #buffer.print()
+        init_samp = {"state": [s],
+                     "action": [a],
+                     "new_state":[sp],
+                     "reward": [r]}
+        #print("init_samp", init_samp)
+        buffer.store(init_samp)
+        #buffer.print()
         #step 2
-        s,a,sp,r = buffer.sample(batch_size)
+        #s,a,sp,r = buffer.sample(batch_size)
+
+        samp = buffer.sample(batch_size)
         for i in range(K):
-            ap = p(sp)
+            ap = p(samp["new_state"])
             #step 3 Q update
-            targets = r + env.gamma*Qvalue(sp,ap).squeeze()
+            targets = samp["reward"] + env.gamma*Qvalue(samp["new_state"],ap).squeeze()
             #targets computation
             optimizerQ.zero_grad()
-            loss = F.mse_loss(Qvalue(s,a).squeeze(),targets)
+            loss = F.mse_loss(Qvalue(samp["state"],samp["action"]).squeeze(),targets)
             loss.backward()
             optimizerQ.step()
             #step 4 and 5
             #computing negativpseudoloss for policy pi
             optimizerpi.zero_grad()
-            api, logits_ap = p(s, logit = True)
-            logpi = F.cross_entropy(logits_ap,env.representationaction(api),weight = None, reduction = 'none' )
-            Vs = torch.stack([torch.sum(torch.mul(Qvalue([si]*env.Na,torch.arange(env.Na)).squeeze(),F.softmax(logits_ap,dim=1).squeeze().detach())) for si in s])
-            advantage = Qvalue(s,api).squeeze()-Vs.detach() 
+            api, logits_ap = p(samp["state"], logit = True)
+            logpi = F.cross_entropy(logits_ap,env.representationaction(api),weight = None, reduction = 'none')
+            #V_batch est l'espérance conditionnelle de Q par rapport à s.
+            #V_batch = torch.stack([torch.sum(torch.mul(Qvalue([si]*env.Na,torch.arange(env.Na)).squeeze(),F.softmax(logits_ap,dim=1).squeeze().detach())) for si in s])
+            #print("V_batch shape", V_batch.shape)
+            advantage = Qvalue(samp["state"],api).squeeze()#-V_batch.detach() 
             NegativPseudoLoss = torch.mean(torch.mul(logpi,advantage))
             NegativPseudoLoss.backward()
             optimizerpi.step()
@@ -80,6 +99,7 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
             plt.legend()
             plt.savefig("Qloss")
             plt.close()
+        #return 0
     return listLosspi, recompense_episodes
 
 

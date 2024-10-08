@@ -63,7 +63,7 @@ class grid:
         x = x.type(torch.float32)
         return x
     def representation_action(self,a):
-        return torch.Tensor([self.actions[i][0] for i in a]), torch.Tensor([self.actions[i][1] for i in a])
+        return torch.Tensor([self.actions[int(i)][0] for i in a]), torch.Tensor([self.actions[int(i)][1] for i in a])
     def transitionvec(self,a,s):
         "a un est un iterable de valeurs scalaires"
         "s un est un iterable de valeurs scalaires"
@@ -71,12 +71,11 @@ class grid:
         mouv0,mouv1 = self.representation_action(a)
         A =(couples[0]+mouv0>=0)*(couples[0]+mouv0<self.Nx)*(couples[1]+mouv1>=0)*(couples[1]+mouv1<self.Ny)
         couples2 = {0:(couples[0]+mouv0*A),
-                    1:(couples[1]+mouv1*A)
-                    }
+                    1:(couples[1]+mouv1*A)}
         newstate = couples2[0]*self.Ny+couples2[1]
         reward = (newstate==self.G) +(A*(-1)+1)*(-1)
         #a l'interieur 1 dans A et 0 dans A*(-1)+1 --> 0
-        #a l'exterieur 0 dans A et 1 dans A*(-1)+1 --> -10
+        #a l'exterieur 0 dans A et 1 dans A*(-1)+1 --> -1
         return newstate,reward
     def representation(self,state):
        return  pad_sequence([self.states_encod[0,:,int(i)] for i in state]).permute(1,0)
