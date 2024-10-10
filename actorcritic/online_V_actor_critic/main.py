@@ -8,7 +8,7 @@ from policy import policy
 from Vfunc import V
 from env import grid
 import os
-from a2c import A2C, testfunc
+from ac import AC, testfunc
 import matplotlib.pyplot as plt
 
         
@@ -39,6 +39,6 @@ if __name__=="__main__":
         optimizerV.load_state_dict(torch.load(os.path.join(loadopt, f"opt_q_load_{start}.pt"),weights_only=True))
         print("chargement poids")
     if train:
-        listLosspi = A2C(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, epsilon = epsilon, start = start, K = 1, gamma =gamma)
+        listLosspi = AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, epsilon = epsilon, start = start, K = 1, gamma =gamma)
     if test:
         testfunc(p, env, epsilon = epsilon, plot = True)

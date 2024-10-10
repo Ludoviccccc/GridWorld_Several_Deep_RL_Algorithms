@@ -9,7 +9,7 @@ class V(nn.Module):
         self.linear1 = nn.Linear(self.Ny*self.Nx,16)
         self.linear2 = nn.Linear(16,16)
         self.linear3 = nn.Linear(16,1)
-        self.actv = nn.Sigmoid()
+        self.actv = nn.ReLU()
 
     def forward(self, s):
         x = self.env.representation(s)

@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-def A2C(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsave=100, epsilon = 0., K = 1, start = 0, gamma = 0.9):
+def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsave=100, epsilon = 0., K = 1, start = 0, gamma = 0.9):
     def epsilon_greedy_policy(state_vec):
         out = [] 
         for s in state_vec:
