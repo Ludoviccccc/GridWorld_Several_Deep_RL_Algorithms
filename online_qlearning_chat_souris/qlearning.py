@@ -7,10 +7,10 @@ import numpy as np
 
 
 def updateQ(s_chat,s_souris,a,r,sp_chat,sp_souris,Qvalue,optimizerQ,env):
-    Qvec = Qvalue(env.representation([sp_souris]*env.Na,[sp_chat]*env.Na), env.representationaction(torch.arange(env.Na))).squeeze()
+    Qvec = Qvalue([sp_souris]*env.Na,[sp_chat]*env.Na, torch.arange(env.Na)).squeeze()
     target = r + env.gamma*torch.max(Qvec).detach()
     optimizerQ.zero_grad()
-    loss = (Qvalue(env.representation([s_souris],[s_chat]), env.representationaction(a)).squeeze() - target[0])**2
+    loss = (Qvalue([s_souris],[s_chat], a).squeeze() - target[0])**2
     loss.backward()
     optimizerQ.step()
     return loss.item()
@@ -31,14 +31,14 @@ def qlearn(Qvalue_chat,Qvalue_souris,optimizerQ_chat,optimizerQ_souris,env, n_ep
             a_chat = torch.randint(0,env.Na,(1,)) 
         else:
             #print("Q action")
-            a_chat = torch.argmax(Qvalue_chat(env.representation([s_souris]*env.Na,[s_chat]*env.Na), env.representationaction(torch.arange(env.Na))).squeeze()).reshape((1,))
+            a_chat = torch.argmax(Qvalue_chat([s_souris]*env.Na,[s_chat]*env.Na,torch.arange(env.Na)).squeeze()).reshape((1,))
 
         if torch.bernoulli(torch.Tensor([epsilon])):
             #print("random action")
             a_souris = torch.randint(0,env.Na,(1,)) 
         else:
             #print("Q action")
-            a_souris = torch.argmax(Qvalue_souris(env.representation([s_souris]*env.Na, [s_chat]*env.Na), env.representationaction(torch.arange(env.Na))).squeeze()).reshape((1,))
+            a_souris = torch.argmax(Qvalue_souris([s_souris]*env.Na, [s_chat]*env.Na, torch.arange(env.Na)).squeeze()).reshape((1,))
         sp_chat = env.transition_chat(a_chat,s_chat,s_souris)
         sp_souris = env.transition_souris(a_souris,s_souris,sp_chat)
         r_chat = env.reward_souris(sp_chat,s_souris) 
@@ -120,12 +120,12 @@ def test(Qvalue_chat,Qvalue_souris, env, epsilon, plot = False):
         if torch.bernoulli(torch.Tensor([epsilon])):
             a_chat = torch.randint(0,env.Na,(1,)) 
         else:
-            a_chat = torch.argmax(Qvalue_chat(env.representation([s_souris]*env.Na,[s_chat]*env.Na), env.representationaction(torch.arange(env.Na))).squeeze()).reshape((1,))
+            a_chat = torch.argmax(Qvalue_chat([s_souris]*env.Na,[s_chat]*env.Na, torch.arange(env.Na)).squeeze()).reshape((1,))
 
         if torch.bernoulli(torch.Tensor([epsilon])):
             a_souris = torch.randint(0,env.Na,(1,)) 
         else:
-            a_souris = torch.argmax(Qvalue_souris(env.representation([s_souris]*env.Na, [s_chat]*env.Na), env.representationaction(torch.arange(env.Na))).squeeze()).reshape((1,))
+            a_souris = torch.argmax(Qvalue_souris([s_souris]*env.Na, [s_chat]*env.Na, torch.arange(env.Na)).squeeze()).reshape((1,))
 
 
         sp_chat = env.transition_chat(a_chat,s_chat,s_souris)

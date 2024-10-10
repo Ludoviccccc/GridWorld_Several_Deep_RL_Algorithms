@@ -2,9 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-from policy import policy
 from Qfunc import Q
-from buffer import Buffer
 from env import grid
 import os
 from qlearning import qlearn, test
@@ -12,9 +10,9 @@ import matplotlib.pyplot as plt
 
         
 if __name__=="__main__":
-    train = True
+    train = False
     testmode = True
-    start =0
+    start =3000
     epsilon = 0.1
     gamma = .9
     nx = 5
@@ -22,8 +20,8 @@ if __name__=="__main__":
     lr = 1e-2
     env = grid(nx,ny, gamma =gamma) 
 
-    Qvalue_chat = Q(nx,ny,env.Na)
-    Qvalue_souris = Q(nx,ny,env.Na)
+    Qvalue_chat = Q(env)
+    Qvalue_souris = Q(env)
     optimizerQ_chat = optim.Adam(Qvalue_chat.parameters(), lr = lr) 
     optimizerQ_souris = optim.Adam(Qvalue_souris.parameters(), lr = lr) 
     N = 20 
