@@ -5,7 +5,6 @@ from torch.nn.utils.rnn import pad_sequence
 import sys
 from policy import policy
 from Qfunc import Q
-#from buffer import Buffer
 sys.path.append("../env")
 from env import grid
 import os
@@ -23,23 +22,19 @@ if __name__=="__main__":
     ny = 5
     G = 10
     ob = [ 6, 19, 18,  8]
-    env = grid(nx,ny,G = G, obstacles_encod = ob) 
-    Qvalue = Q(env)
     lr = 1e-3
-    optimizerQ = optim.Adam(Qvalue.parameters(), lr = lr) 
-    N = 20 
-    batch_size = 10
-    n_epochs = 10000
-
+    n_episodes = 10000
     loadpath = "loads"
     loadopt = "opt"
 
+    env = grid(nx,ny,G = G, obstacles_encod = ob) 
+    Qvalue = Q(env)
+    optimizerQ = optim.Adam(Qvalue.parameters(), lr = lr) 
     if start>0:
         Qvalue.load_state_dict(torch.load(os.path.join(loadpath,f"q_load_{start}.pt") ,weights_only = True))
         optimizerQ.load_state_dict(torch.load(os.path.join(loadopt,f"opt_q_load_{start}.pt") ,weights_only = True))
-
     if train:
-        qlearn(Qvalue,optimizerQ,env, n_epochs, loadpath,loadopt,gamma =gamma, epsilon = epsilon, start = 0)
+        qlearn(Qvalue,optimizerQ,env, n_episodes, loadpath,loadopt,gamma =gamma, epsilon = epsilon, start = 0)
     if testmode:
         iterations = test(Qvalue, env, epsilon = 0, plot = True)
         print("nombre d'iterations", iterations)
