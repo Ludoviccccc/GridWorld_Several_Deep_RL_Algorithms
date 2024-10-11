@@ -5,44 +5,37 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-def qlearn(Qvalue,optimizerQ,env, n_episodes, loadpath,loadopt,gamma = .9, freqsave=100, epsilon = 0.1,  start = 0):
-    def policy(s):
-        if torch.bernoulli(torch.Tensor([epsilon])):
-            a = torch.randint(0,env.Na,(1,)) 
-        else:
-            a = Qvalue.argmax(s)
-        return a
+def qlearn(Qvalue,optimizerQ,env, n_epochs, loadpath,loadopt, freqsave=100, epsilon = 0.1, K = 1, start = 0):
     listLossQ = []
     recompense_episodes = []
     nb_iteration_episodes = []
+    print("K", K)
     print("freqsave", freqsave)
-    for j in range(start,n_episodes+1):
-        k = 1
+    for j in range(start,n_epochs+1):
+
+        #step 1
         s = torch.randint(0,env.Nx*env.Ny,(1,))
-        while True:
-            a = policy(s)
-            sp,r = env.transition(a,s)
-            #step 2
+        if torch.bernoulli(torch.Tensor([epsilon])):
+            a = torch.randint(0,env.Na,(1,)) 
+        else:
+            a = torch.argmax(Qvalue(env.representation([s]*env.Na), env.representationaction(torch.arange(env.Na))).squeeze()).reshape((1,))
+        sp,r = env.transition(a,s)
+        #step 2
+        for i in range(K):
             #step 3 Q update
-            Qvec = Qvalue([sp]*env.Na,torch.arange(env.Na))
-            target = r + gamma*torch.max(Qvec).detach()
+            Qvec = Qvalue(env.representation([sp]*env.Na), env.representationaction(torch.arange(env.Na))).squeeze()
+            target = r + env.gamma*torch.max(Qvec).detach()
             optimizerQ.zero_grad()
-            loss = (Qvalue(s,a) - target[0])**2
+            loss = (Qvalue(env.representation(s),env.representationaction(a)).squeeze() - target[0])**2
             loss.backward()
             optimizerQ.step()
             listLossQ.append(loss.detach().to("cpu"))
-            k+=1
-            if sp==env.G:
-                if j%100==0:
-                    print(f"episod with {k} iterations")
-                break
-            s = sp
         if j%500==0:
-            print("episodes", j,f"/{n_episodes}")
+            print("epochs", j,f"/{n_epochs}")
             print("Loss Q", torch.mean(torch.Tensor(listLossQ)))
             if len(recompense_episodes)>0:
                 #print("recompense", np.mean(recompense_episodes))
-                print("last reward", recompense_episodes[-1])
+                print("dernier retour", recompense_episodes[-1])
                 #print(recompense_episodes)
         if j%freqsave==0:
             torch.save(Qvalue.state_dict(), os.path.join(loadpath,f"q_load_{j}.pt"))
@@ -80,7 +73,7 @@ def test(Qvalue, env, epsilon, plot = False):
         if torch.bernoulli(torch.Tensor([epsilon])):
             a = torch.randint(0,env.Na,(1,)) 
         else:
-            a = Qvalue.argmax(s)
+            a = torch.argmax(Qvalue(env.representation([s]*env.Na), env.representationaction(torch.arange(env.Na))).squeeze())
         sp,R = env.transition(a,s)
         s = sp
         i+=1
@@ -89,4 +82,6 @@ def test(Qvalue, env, epsilon, plot = False):
         rewardlist.append(R)
         if s==env.G:
             break
+    #print(rewardlist)
+    #print("sortie", sum(rewardlist))
     return sum(rewardlist),i

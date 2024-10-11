@@ -8,7 +8,7 @@ class grid:
     """
     Envirnonement grille sur laquelle se deplace l'agent jusqu'à atteindre le point self.G
     """
-    def __init__(self,Nx,Ny, G = 50,gamma = .9,S = 3,epsilon=0.05, obstacles_encod = torch.Tensor([])):
+    def __init__(self,Nx,Ny, G = 50,S = 3,epsilon=0.05, obstacles_encod = torch.Tensor([])):
         assert(0<=G<Nx*Ny)
         self.actions = [(0,1), (0, -1), (1, 0), (-1, 0),
                         (1,1),(-1,1),(1,-1),(-1,-1)]
@@ -18,12 +18,10 @@ class grid:
         self.Ny = Ny
         self.R = -1
         self.G = G
-        self.gamma = gamma
+        #self.gamma = gamma
         #self.S = S
         self.states_encod = torch.eye(self.Nx*self.Ny).unsqueeze(0)
         self.obstacles_encod = obstacles_encod
-        oo = [j for j in range(self.Nx*self.Ny) if not (j in self.obstacles_encod)]
-        self.S = oo[np.random.randint(0,len(oo))]
         #placer obstacles
 
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
