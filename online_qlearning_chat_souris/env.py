@@ -45,9 +45,6 @@ class grid:
 
     def reward_souris(self,s_out,s_chat):
         reward = (s_out==s_chat)*(-10)
-        #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
-        #    reward+=5
-        #self.table_fromage[s_out[0],s_out[1]]=0
         return reward
     def transition_souris(self,a,s,s_chat):
         assert(0<=s<self.Nx*self.Ny)
@@ -81,17 +78,3 @@ class grid:
     def representationaction(self,action):
         return  pad_sequence([self.actions_encod[0,:,int(i)] for i in action]).permute(1,0)
 
-
-
-#    def transitionvec(self,a,s):
-#        "a un est un iterable de valeurs scalaires"
-#        "s un est un iterable de valeurs scalaires"
-#        couples = {0:s//self.Ny,1:s%self.Ny}
-#        mouv1,mouv2 = self.representation_action(a)
-#        A =(couples[0]+mouv1>=0)*(couples[0]+mouv1<self.Nx)*(couples[1]+mouv2>=0)*(couples[1]+mouv2<self.Ny)
-#        couples2 = {0:(couples[0]+mouv1)*A,
-#                    1:(couples[1]+mouv2)*A
-#                    }
-#        newstate = couples2[0]*self.Ny+couples2[1]
-#        reward = (newstate==self.G)#+(A*(-1)+1)*(-10)
-#        return newstate,reward

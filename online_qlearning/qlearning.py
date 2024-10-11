@@ -13,12 +13,13 @@ def qlearn(Qvalue,optimizerQ,env, n_episodes, loadpath,loadopt,gamma = .9, freqs
             a = Qvalue.argmax(s)
         return a
     listLossQ = []
-    recompense_episodes = []
+    retour_episodes = []
     nb_iteration_episodes = []
     print("freqsave", freqsave)
     for j in range(start,n_episodes+1):
         k = 1
         s = torch.randint(0,env.Nx*env.Ny,(1,))
+        Retour = 0
         while True:
             a = policy(s)
             sp,r = env.transition(a,s)
@@ -36,25 +37,25 @@ def qlearn(Qvalue,optimizerQ,env, n_episodes, loadpath,loadopt,gamma = .9, freqs
                 if j%100==0:
                     print(f"episod with {k} iterations")
                 break
+            Retour += gamma*r
             s = sp
         if j%500==0:
             print("episodes", j,f"/{n_episodes}")
             print("Loss Q", torch.mean(torch.Tensor(listLossQ)))
-            if len(recompense_episodes)>0:
-                #print("recompense", np.mean(recompense_episodes))
-                print("last reward", recompense_episodes[-1])
-                #print(recompense_episodes)
+            if len(retour_episodes)>0:
+                print("last reward", retour_episodes[-1])
+                #print(retour_episodes)
         if j%freqsave==0:
             torch.save(Qvalue.state_dict(), os.path.join(loadpath,f"q_load_{j}.pt"))
             torch.save(optimizerQ.state_dict(), os.path.join(loadopt,f"opt_q_load_{j}.pt"))
 
         if j%100==0 and j>1000:
             retour, nb = test(Qvalue,env, epsilon)
-            recompense_episodes.append(retour)
+            retour_episodes.append(retour)
             nb_iteration_episodes.append(nb)
             print("plot")
             plt.figure()
-            plt.plot(recompense_episodes, label="retour")
+            plt.plot(retour_episodes, label="retour")
             plt.legend()
             plt.savefig("retour")
             plt.close()
@@ -71,11 +72,11 @@ def qlearn(Qvalue,optimizerQ,env, n_episodes, loadpath,loadopt,gamma = .9, freqs
             plt.savefig("Qloss")
             plt.close()
 
-def test(Qvalue, env, epsilon, plot = False):
+def test(Qvalue, env, epsilon, gamma = .9,plot = False):
     #la fonction renvoie le retour, nombre iterations pour finir
     i = 0
     s = torch.randint(0,env.Nx*env.Ny,(1,)).item()
-    rewardlist = []
+    Retour =0
     while True:
         if torch.bernoulli(torch.Tensor([epsilon])):
             a = torch.randint(0,env.Na,(1,)) 
@@ -86,7 +87,7 @@ def test(Qvalue, env, epsilon, plot = False):
         i+=1
         if plot:
             env.grid(s)
-        rewardlist.append(R)
+        Retour +=gamma*R
         if s==env.G:
             break
-    return sum(rewardlist),i
+    return Retour,i

@@ -19,4 +19,6 @@ class Q(nn.Module):
         out = self.linear2(out)
         out = self.actv(out)
         out = self.linear3(out)
-        return out
+        return out.squeeze()
+    def argmax(self,s_souris,s_chat):
+        return torch.argmax(self.__call__([s_souris]*self.env.Na, [s_chat]*self.env.Na,torch.arange(self.env.Na))).reshape((1,))

@@ -7,50 +7,53 @@ import numpy as np
 
 
 def updateQ(s_chat,s_souris,a,r,sp_chat,sp_souris,Qvalue,optimizerQ,env):
-    Qvec = Qvalue([sp_souris]*env.Na,[sp_chat]*env.Na, torch.arange(env.Na)).squeeze()
+    Qvec = Qvalue([sp_souris]*env.Na,[sp_chat]*env.Na, torch.arange(env.Na))
     target = r + env.gamma*torch.max(Qvec).detach()
     optimizerQ.zero_grad()
-    loss = (Qvalue([s_souris],[s_chat], a).squeeze() - target[0])**2
+    loss = (Qvalue([s_souris],[s_chat], a) - target[0])**2
     loss.backward()
     optimizerQ.step()
     return loss.item()
 
-def qlearn(Qvalue_chat,Qvalue_souris,optimizerQ_chat,optimizerQ_souris,env, n_episodes, loadpath,loadopt, freqsave=100, epsilon = 0.1, K = 1, start = 0):
+def qlearn(Qvalue_chat,Qvalue_souris,optimizerQ_chat,optimizerQ_souris,env, n_episodes, loadpath,loadopt, freqsave=100, epsilon = 0.1, start = 0):
     listLossQ_chat = []
     listLossQ_souris = []
     recompense_episodes = []
     recompense_chat = []
     recompense_souris = []
     for j in range(start,n_episodes+1):
+        s_souris = torch.randint(0,env.Nx*env.Ny,(1,))
+        s_chat = torch.randint(0,env.Nx*env.Ny,(1,))
+        k = 0
         while True:
-            s_souris = torch.randint(0,env.Nx*env.Ny,(1,))
-            #print("s_souris", s_souris)
-            s_chat = torch.randint(0,env.Nx*env.Ny,(1,))
-            #step 1
             if torch.bernoulli(torch.Tensor([epsilon])):
-                #print("random action")
                 a_chat = torch.randint(0,env.Na,(1,)) 
             else:
-                #print("Q action")
-                a_chat = torch.argmax(Qvalue_chat([s_souris]*env.Na,[s_chat]*env.Na,torch.arange(env.Na)).squeeze()).reshape((1,))
+                a_chat = Qvalue_chat.argmax(s_souris,s_chat)
 
             if torch.bernoulli(torch.Tensor([epsilon])):
-                #print("random action")
                 a_souris = torch.randint(0,env.Na,(1,)) 
             else:
-                #print("Q action")
-                a_souris = torch.argmax(Qvalue_souris([s_souris]*env.Na, [s_chat]*env.Na, torch.arange(env.Na)).squeeze()).reshape((1,))
+                a_souris = Qvalue_souris.argmax(s_souris,s_chat)
+
             sp_chat = env.transition_chat(a_chat,s_chat,s_souris)
             sp_souris = env.transition_souris(a_souris,s_souris,sp_chat)
             r_chat = env.reward_souris(sp_chat,s_souris) 
             r_souris = env.reward_souris(sp_souris,sp_chat) 
-        #step 2
-        for i in range(K):
-            #step 3 Q update
-            loss = updateQ(s_chat,s_souris,a_chat,r_chat,sp_chat,sp_souris,Qvalue_chat,optimizerQ_chat,env)
-            listLossQ_chat.append(loss)
+
+            loss = updateQ(s_chat,s_souris,a_chat,  r_chat,  sp_chat,sp_souris,Qvalue_chat,optimizerQ_chat,env)
             loss = updateQ(s_chat,s_souris,a_souris,r_souris,sp_chat,sp_souris,Qvalue_souris,optimizerQ_souris,env)
+            k +=1
+            if sp_souris==sp_chat:
+                if j%5==0:
+                    print(f"episod {j} finished with {k} iterations")
+                break
+            #env.grid(s_souris,s_chat)
+            s_chat = sp_chat
+            s_souris = sp_souris
+
             listLossQ_souris.append(loss)
+            listLossQ_chat.append(loss)
 
         if j%100==0:
             print("episodes", j,f"/{n_episodes}")
@@ -58,7 +61,7 @@ def qlearn(Qvalue_chat,Qvalue_souris,optimizerQ_chat,optimizerQ_souris,env, n_ep
             print("Loss Q chat", torch.mean(torch.Tensor(listLossQ_chat)))
             if len(recompense_episodes)>0:
                 print("moyenne nombre iterations", np.mean(recompense_episodes))
-        if j%500==0:
+        if j%20==0:
             torch.save(Qvalue_chat.state_dict(), os.path.join(loadpath,f"q_chat_load_{j}.pt"))
             torch.save(Qvalue_souris.state_dict(), os.path.join(loadpath,f"q_souris_load_{j}.pt"))
             torch.save(optimizerQ_chat.state_dict(), os.path.join(loadopt,f"opt_q_chat_load_{j}.pt"))
@@ -119,15 +122,18 @@ def test(Qvalue_chat,Qvalue_souris, env, epsilon, plot = False):
     rewardlist_souris = []
     while True:
         if torch.bernoulli(torch.Tensor([epsilon])):
+            #print("random action")
             a_chat = torch.randint(0,env.Na,(1,)) 
         else:
-            a_chat = torch.argmax(Qvalue_chat([s_souris]*env.Na,[s_chat]*env.Na, torch.arange(env.Na)).squeeze()).reshape((1,))
-
+            #print("Q action")
+            a_chat = Qvalue_chat.argmax(s_souris,s_chat)
+        
         if torch.bernoulli(torch.Tensor([epsilon])):
+            #print("random action")
             a_souris = torch.randint(0,env.Na,(1,)) 
         else:
-            a_souris = torch.argmax(Qvalue_souris([s_souris]*env.Na, [s_chat]*env.Na, torch.arange(env.Na)).squeeze()).reshape((1,))
-
+            #print("Q action")
+            a_souris = Qvalue_souris.argmax(s_souris,s_chat)
 
         sp_chat = env.transition_chat(a_chat,s_chat,s_souris)
         sp_souris = env.transition_souris(a_souris,s_souris,sp_chat)

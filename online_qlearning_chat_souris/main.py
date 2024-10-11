@@ -10,21 +10,21 @@ import matplotlib.pyplot as plt
 
         
 if __name__=="__main__":
-    train = False
+    train = True
     testmode = True
-    start =3000
+    start = 0
     epsilon = 0.1
     gamma = .9
-    nx = 5
-    ny = 5
-    lr = 1e-2
+    nx = 6
+    ny = 6
+    lr = 1e-3
     env = grid(nx,ny, gamma =gamma) 
 
     Qvalue_chat = Q(env)
     Qvalue_souris = Q(env)
+    Qvalue_souris.Na = 4
     optimizerQ_chat = optim.Adam(Qvalue_chat.parameters(), lr = lr) 
     optimizerQ_souris = optim.Adam(Qvalue_souris.parameters(), lr = lr) 
-    N = 20 
     n_epochs = 100000
 
     loadpath = "loads"
@@ -47,5 +47,5 @@ if __name__=="__main__":
         plt.show()
 
     if testmode:
-        iterations =test(Qvalue_chat,Qvalue_souris, env, epsilon, plot = True)
+        iterations =test(Qvalue_chat,Qvalue_souris, env, epsilon = 0, plot = True)
         print("nombre d'iterations", iterations)
