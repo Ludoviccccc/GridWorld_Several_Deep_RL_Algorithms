@@ -2,4 +2,3 @@
 * Policy gradient algorithm
 * Actor critic ac
 * online qlearning
-* online qlearning for a cat and mouse game
