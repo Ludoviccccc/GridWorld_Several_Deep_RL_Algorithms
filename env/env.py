@@ -2,7 +2,11 @@ import torch
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
 import torch.nn as nn
+
+
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 class grid:
     """
@@ -18,22 +22,15 @@ class grid:
         self.Ny = Ny
         self.R = -1
         self.G = G
-        #self.gamma = gamma
-        #self.S = S
         self.states_encod = torch.eye(self.Nx*self.Ny).unsqueeze(0)
         self.obstacles_encod = obstacles_encod
-        #placer obstacles
-
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
     def transition(self,a,s):
         assert(0<=s<self.Nx*self.Ny)
         d = self.actions[a]
         s_couple = (s//self.Ny, s%self.Ny)
-
         sp = (s_couple[0]+ d[0], s_couple[1]+d[1])
         s_temp = sp[0]*self.Ny+sp[1]  
-
-        condition = self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0# and not(s_couple[0]+ d[0] in self.obstacles_encod 
         condition = self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0 and not(s_temp in self.obstacles_encod)
         if condition:
             assert(0<=sp[0]*self.Ny+sp[1]<self.Nx*self.Ny)
@@ -41,9 +38,8 @@ class grid:
             R = torch.Tensor([(s==self.G)*1.0])
         else:
             R=torch.Tensor([-1])# la recompense est -1 si l'agent essai de sortir de la grille
-            #R = -1
         return s,R
-    def grid(self,s):
+    def grid(self,s, name = False):
         assert(type(s)==int)
         assert(0<=s<=self.Nx*self.Ny)
         T = torch.zeros((self.Nx,self.Ny))
@@ -53,6 +49,13 @@ class grid:
             #print("p",p)
             T[p//self.Ny, p%self.Ny] = -1
         print(T)
+        if name:
+            plt.imshow(T.numpy())
+            plt.xticks([])
+            plt.yticks([])
+            plt.savefig(name,bbox_inches='tight')
+            plt.close()
+            
     def tensor_state(self,s):
         return self.states_encod[:,:,s]
     def zero_one(self,state,J):
@@ -67,13 +70,12 @@ class grid:
         "s un est un iterable de valeurs scalaires"
         couples = {0:s//self.Ny,1:s%self.Ny}
         mouv0,mouv1 = self.representation_action(a)
-        A =(couples[0]+mouv0>=0)*(couples[0]+mouv0<self.Nx)*(couples[1]+mouv1>=0)*(couples[1]+mouv1<self.Ny)
-        couples2 = {0:(couples[0]+mouv0*A),
-                    1:(couples[1]+mouv1*A)}
+        InGrid =(couples[0]+mouv0>=0)*(couples[0]+mouv0<self.Nx)*(couples[1]+mouv1>=0)*(couples[1]+mouv1<self.Ny)
+        couples2 = {0:(couples[0]+mouv0*InGrid),1:(couples[1]+mouv1*InGrid)}
         newstate = couples2[0]*self.Ny+couples2[1]
-        reward = (newstate==self.G) +(A*(-1)+1)*(-1)
-        #a l'interieur 1 dans A et 0 dans A*(-1)+1 --> 0
-        #a l'exterieur 0 dans A et 1 dans A*(-1)+1 --> -1
+        reward = (newstate==self.G) + (InGrid==False)*(-1)
+        #a l'interieur 1 dans InGrid et 0 dans InGrid*(-1)+1 --> 0
+        #a l'exterieur 0 dans InGrid et 1 dans InGrid*(-1)+1 --> -1
         return newstate,reward
     def representation(self,state):
        return  pad_sequence([self.states_encod[0,:,int(i)] for i in state]).permute(1,0)

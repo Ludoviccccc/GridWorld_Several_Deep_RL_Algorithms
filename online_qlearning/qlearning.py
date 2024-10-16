@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-def qlearn(Qvalue,optimizerQ,env, n_episodes, loadpath,loadopt,gamma = .9, freqsave=100, epsilon = 0.1,  start = 0):
+def qlearn(agent, Qvalue,optimizerQ,env, n_episodes, loadpath,loadopt,gamma = .9, freqsave=100, epsilon = 0.1,  start = 0):
     def policy(s):
         if torch.bernoulli(torch.Tensor([epsilon])):
             a = torch.randint(0,env.Na,(1,)) 
@@ -21,8 +21,9 @@ def qlearn(Qvalue,optimizerQ,env, n_episodes, loadpath,loadopt,gamma = .9, freqs
         s = torch.randint(0,env.Nx*env.Ny,(1,))
         Retour = 0
         while True:
-            a = policy(s)
-            sp,r = env.transition(a,s)
+            #a = policy(s)
+            a = agent.amax_epsilon(Qvalue,s)
+            sp,r = env.transition(a[0],s)
             #step 2
             #step 3 Q update
             Qvec = Qvalue([sp]*env.Na,torch.arange(env.Na))
@@ -43,14 +44,16 @@ def qlearn(Qvalue,optimizerQ,env, n_episodes, loadpath,loadopt,gamma = .9, freqs
             print("episodes", j,f"/{n_episodes}")
             print("Loss Q", torch.mean(torch.Tensor(listLossQ)))
             if len(retour_episodes)>0:
-                print("last reward", retour_episodes[-1])
+                print("Return for last trial", retour_episodes[-1])
                 #print(retour_episodes)
         if j%freqsave==0:
             torch.save(Qvalue.state_dict(), os.path.join(loadpath,f"q_load_{j}.pt"))
             torch.save(optimizerQ.state_dict(), os.path.join(loadopt,f"opt_q_load_{j}.pt"))
 
         if j%100==0 and j>1000:
-            retour, nb = test(Qvalue,env, epsilon)
+            list_retour,list_Q, nb = test(agent,Qvalue, env, epsilon)
+            retour = list_retour[0]
+            #retour, nb = test(Qvalue,env, epsilon)
             retour_episodes.append(retour)
             nb_iteration_episodes.append(nb)
             print("plot")
@@ -72,22 +75,29 @@ def qlearn(Qvalue,optimizerQ,env, n_episodes, loadpath,loadopt,gamma = .9, freqs
             plt.savefig("Qloss")
             plt.close()
 
-def test(Qvalue, env, epsilon, gamma = .9,plot = False):
+def test(agent, Qvalue, env, epsilon, gamma = .9,plot = False, graph = False):
     #la fonction renvoie le retour, nombre iterations pour finir
     i = 0
     s = torch.randint(0,env.Nx*env.Ny,(1,)).item()
-    Retour =0
+    idx = torch.randint(0,env.Nx*env.Ny-len(env.obstacles_encod),(1,)).item()
+    s = [a for a in range(env.Nx*env.Ny) if a not in env.obstacles_encod][idx]
+    list_recompense = []
+    list_Q = []
+    if plot:
+        if graph:
+            env.grid(s,name=os.path.join("image",str(i)))
     while True:
-        if torch.bernoulli(torch.Tensor([epsilon])):
-            a = torch.randint(0,env.Na,(1,)) 
-        else:
-            a = Qvalue.argmax(s)
+        a = agent.amax_epsilon(Qvalue,[s])[0]
+
         sp,R = env.transition(a,s)
         s = sp
-        i+=1
         if plot:
-            env.grid(s)
-        Retour +=gamma*R
+            env.grid(s,name=os.path.join("image",str(i)))
+        list_recompense.append(R.item()*(gamma**i))
+        list_Q.append(Qvalue([s],[a]).item())
         if s==env.G:
             break
-    return Retour,i
+        i+=1
+    list_retour = [sum(list_recompense[i:]) for i in range(len(list_recompense))]
+    return list_retour,list_Q, i
+

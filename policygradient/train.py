@@ -12,9 +12,10 @@ def trainfunc(n_episodes, p, env, optimizer):
     nombres_iterations = []
     recompense = []
     for n in range(n_episodes):
-        s = env.S
+        #s = env.S
+        s = torch.randint(0,env.Nx*env.Ny, (1,))[0]
         R_list = []
-        States = [env.S]
+        States = [s]
         actions_list = []
         out_list = []
         sum_R = 0
@@ -48,9 +49,9 @@ def trainfunc(n_episodes, p, env, optimizer):
         out_p = pad_sequence(out_list)
         #print("actions_list", actions_list)
         actions_tens = env.zero_one(torch.tensor(actions_list),env.Na)
+        print("actions_tens",actions_tens.shape)
+        print("out_p[0]", out_p[0].shape)
         loss = Loss(out_p[0],actions_tens)
-        #print("actions_tens",actions_tens.shape)
-        #print("out_p[0]", out_p[0].shape)
         RR =sum(R_list)
         recompense.append(RR)
         nombres_iterations.append(i)
