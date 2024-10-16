@@ -20,7 +20,7 @@ class policy(nn.Module):
         out = self.linear2(out)
         out = self.actv(out)
         logits  = self.linear3(out)
-        dist = distributions.Categorical(F.softmax(logits,dim=0))  
+        dist = distributions.Categorical(F.softmax(logits,dim=1))  
         action  = dist.sample([1]).squeeze()
         if logit:
             out =  action, logits

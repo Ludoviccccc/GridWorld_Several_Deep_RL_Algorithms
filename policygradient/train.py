@@ -47,10 +47,7 @@ def trainfunc(n_episodes, p, env, optimizer):
         T = torch.tensor([sum(R_list[i:])for i in range(len(R_list))]).type(torch.float32)
         T = (T - torch.mean(T))#/torch.std(T)
         out_p = pad_sequence(out_list)
-        #print("actions_list", actions_list)
         actions_tens = env.zero_one(torch.tensor(actions_list),env.Na)
-        print("actions_tens",actions_tens.shape)
-        print("out_p[0]", out_p[0].shape)
         loss = Loss(out_p[0],actions_tens)
         RR =sum(R_list)
         recompense.append(RR)
@@ -63,6 +60,9 @@ def trainfunc(n_episodes, p, env, optimizer):
         #On maximise la pseudo loss en minimisant son oppose
         #le signe moins vient de l'entropie croisee
         optimizer.step()
+
+        print("actions_tens",actions_tens.shape)
+        print("out_p[0]", out_p[0].shape)
    # print("recompense", recompense)
    # print("nombre iterations", nombres_iterations)
     return recompense, nombres_iterations

@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsave=100, epsilon = 0., K = 1, start = 0, gamma = 0.9):
+def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsave=100, epsilon = 0., K = 20, start = 0, gamma = 0.9):
     def epsilon_greedy_policy(state_vec):
         out = [] 
         for s in state_vec:
@@ -32,9 +32,9 @@ def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsav
     listLossV = []
     nombre_iteration_episodes = []
     #Initial state
-    samp = {"state": torch.randint(0,env.Nx*env.Ny,(1,))}
     for j in range(start,n_episodes+1):
         k = 0
+        samp = {"state": torch.randint(0,env.Nx*env.Ny,(1,))}
         while True:
             if k%100==0 and k>0:
                 print(k)
@@ -44,7 +44,8 @@ def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsav
             targets = samp["reward"] + gamma*Vfunc(samp["new_state"]).squeeze()
             targets = targets.detach()
             #V update 
-            loss = updateV(samp, targets)
+            for l in range(K):
+                loss = updateV(samp, targets)
             #advantage evaluation
             advantage = samp["reward"] + gamma*Vfunc(samp["new_state"]).squeeze() - Vfunc(samp["state"]).squeeze()
             advantage = advantage.detach()
