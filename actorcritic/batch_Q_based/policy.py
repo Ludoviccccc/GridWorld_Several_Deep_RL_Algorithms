@@ -20,11 +20,8 @@ class policy(nn.Module):
         out = self.actv(out)
         logits  = self.linear3(out)
         logits  = torch.sigmoid(self.linear3(out))
-        #logits = F.softmax(out,dim=1)
-        print(F.softmax(logits,dim=1))
-        print(logits)
         dist = distributions.Categorical(F.softmax(logits,dim=1))  
-        action  = dist.sample([1]).squeeze()
+        action  = dist.sample([1])
         if logit:
             out =  action, logits
         else:

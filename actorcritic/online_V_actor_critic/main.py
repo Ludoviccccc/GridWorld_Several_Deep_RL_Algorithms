@@ -44,6 +44,6 @@ if __name__=="__main__":
         optimizerV.load_state_dict(torch.load(os.path.join(loadopt, f"opt_q_load_{start}.pt"),weights_only=True))
         print("chargement poids")
     if train:
-        listLosspi = AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, start = start, K = 20, gamma =gamma)
+        listLosspi = AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, start = start, K = 1, gamma =gamma)
     if test:
         testfunc(p, env, epsilon = epsilon, plot = True)

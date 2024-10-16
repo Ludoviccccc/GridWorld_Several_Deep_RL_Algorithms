@@ -1,1 +1,1 @@
-# Parallel actor critic implementation
+# Actor critic implementation with State value fonction

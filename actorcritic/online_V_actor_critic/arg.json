@@ -1,8 +1,8 @@
 
 {
-	"train": false,
+	"train": true,
 	"test": true,
-	"start": 2000,
+	"start": 0,
 	"epsilon": 0.1,
 	"gamma": 0.9,
 	"nx": 6,
