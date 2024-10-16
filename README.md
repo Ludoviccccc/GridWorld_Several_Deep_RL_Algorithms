@@ -3,4 +3,4 @@
 * Actor critic ac
 * online qlearning <br>
 
-Upcomming works: I will dissociate an agent class from the environnment class. Which is already done for online qlearning
+Upcoming works: I will dissociate an agent class from the environnment class. Which is already done for online qlearning
