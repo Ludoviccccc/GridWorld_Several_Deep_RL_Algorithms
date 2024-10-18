@@ -46,7 +46,6 @@ class grid:
         T[self.G//self.Ny, self.G%self.Ny] = 6
         T[s//self.Ny, s%self.Ny] = 11
         for p in self.obstacles_encod:
-            #print("p",p)
             T[p//self.Ny, p%self.Ny] = -1
         print(T)
         if name:

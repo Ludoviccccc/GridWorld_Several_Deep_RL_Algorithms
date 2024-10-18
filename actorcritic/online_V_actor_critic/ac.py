@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import subprocess
 
 def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsave=100, epsilon = 0., K = 20, start = 0, gamma = 0.9):
     def epsilon_greedy_policy(state_vec):
@@ -35,9 +36,7 @@ def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsav
     for j in range(start,n_episodes+1):
         k = 0
         samp = {"state": torch.randint(0,env.Nx*env.Ny,(1,))}
-        while True:
-            if k%100==0 and k>0:
-                print(k)
+        while samp["state"][0]!=env.G:
             samp["action"] = epsilon_greedy_policy(samp["state"])
             samp["new_state"], samp["reward"] = env.transitionvec(samp["action"], samp["state"])
             #targets computation
@@ -52,15 +51,13 @@ def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsav
             optimizerpi.zero_grad()
             #Policy update
             NegativPseudoLoss = updatePolicy(advantage, samp) # theta <-- theta + alpha* grad J(theta) using negativpseudoloss for policy pi
-            if samp["new_state"][0]==env.G:
-                if j%100==0:
-                    print(f"episod {j} finished with {k} iterations")
-                break
             k+=1
             samp["state"] = samp["new_state"]
 
             listLosspi.append(NegativPseudoLoss.item())
             listLossV.append(loss.item())
+        if j%100==0:
+            print(f"episod {j} finished with {k} iterations")
         if j%100==0:
             print("episodes", j,f"/{n_episodes}")
             print("NegativPseudoLoss",torch.mean(torch.Tensor(listLosspi)))
@@ -78,7 +75,7 @@ def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsav
 
 
 
-def testfunc(p, env, epsilon, plot = False):
+def testfunc(p, env, epsilon, plot = False, graph = False):
     i = 0
     s = torch.randint(0,env.Nx*env.Ny,(1,)).item()
     rewardlist = []
@@ -92,7 +89,10 @@ def testfunc(p, env, epsilon, plot = False):
         i+=1
         rewardlist.append(R)
         if plot:
-            env.grid(s)
+            if graph:
+                env.grid(s,os.path.join("image",str(i)))
+            else:
+                env.grid(s)
             print("")
         if s==env.G:
             print(f"{i} iterations")

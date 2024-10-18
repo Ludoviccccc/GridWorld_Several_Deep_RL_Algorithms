@@ -1,15 +1,18 @@
 
 {
-	"train": true,
+	"train": false,
 	"test": true,
-	"start": 0,
+	"start": 10000,
+	"lr":1e-3,
 	"epsilon": 0.1,
 	"gamma": 0.9,
 	"nx": 6,
 	"ny": 6,
 	"G": 10,
-	"n_episodes": 2000,
+	"ob": [3,5,1,20,33],
+	"n_episodes": 10000,
 	"loadpath": "loads",
-	"loadopt": "opt"
+	"loadopt": "opt",
+	"graph": true
 }
 

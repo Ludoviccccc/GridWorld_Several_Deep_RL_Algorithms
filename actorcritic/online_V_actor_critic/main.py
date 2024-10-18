@@ -27,16 +27,16 @@ if __name__=="__main__":
     n_episodes = data["n_episodes"]
     loadpath = data["loadpath"]
     loadopt = data["loadopt"]
-    #graph = data["graph"]
-    #ob = torch.Tensor(data["ob"])
-    #lr = data["lr"]
+    graph = data["graph"]
+    ob = data["ob"]
+    lr = data["lr"]
 
-
-    env = grid(nx,ny,G = G) 
+    print("ob", ob)
+    env = grid(nx,ny,G = G, obstacles_encod = ob) 
     p = policy(env)
     Vfunc = V(env)
-    optimizerpi = optim.Adam(p.parameters(), lr = 1e-3) 
-    optimizerV = optim.Adam(Vfunc.parameters(), lr = 1e-3) 
+    optimizerpi = optim.Adam(p.parameters(), lr = lr) 
+    optimizerV = optim.Adam(Vfunc.parameters(), lr = lr) 
     if start>0:
         p.load_state_dict(torch.load(os.path.join(loadpath,         f"pi_load_{start}.pt"),weights_only=True))
         optimizerpi.load_state_dict(torch.load(os.path.join(loadopt,f"opt_pi_load_{start}.pt"),weights_only=True))
@@ -46,4 +46,4 @@ if __name__=="__main__":
     if train:
         listLosspi = AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, start = start, K = 1, gamma =gamma)
     if test:
-        testfunc(p, env, epsilon = epsilon, plot = True)
+        testfunc(p, env, epsilon = epsilon, plot = True, graph = graph)
