@@ -1,1 +1,1 @@
-# Parallel actor critic implementation
+# Algorthme à corriger.

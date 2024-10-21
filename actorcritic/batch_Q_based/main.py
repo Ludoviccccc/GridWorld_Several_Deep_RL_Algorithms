@@ -14,19 +14,19 @@ import matplotlib.pyplot as plt
 
         
 if __name__=="__main__":
-    train = True
+    train = False
     test = True
-    start = 0
-    epsilon = 0.
+    start = 4000
+    epsilon = 0.1
     gamma = .9
     nx = 6
     ny = 6
     G = 10
     N = 3 
-    batch_size = 1
-    maxsize = 1
-    K = 1
-    n_epochs = 5000
+    batch_size = 10
+    maxsize = 10
+    K = 5
+    n_epochs = 10000
     loadpath = "loads"
     loadopt = "opt"
 

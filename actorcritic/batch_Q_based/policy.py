@@ -9,9 +9,9 @@ class policy(nn.Module):
         self.Ny = env.Ny
         self.Na = env.Na
         self.env = env
-        self.linear1 = nn.Linear(self.Ny*self.Nx,64)
-        self.linear2 = nn.Linear(64,32)
-        self.linear3 = nn.Linear(32,self.Na)
+        self.linear1 = nn.Linear(self.Ny*self.Nx,32)
+        self.linear2 = nn.Linear(32,16)
+        self.linear3 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
     def forward(self, x, logit =False):
         out = self.linear1(self.env.representation(x))
@@ -19,9 +19,8 @@ class policy(nn.Module):
         out = self.linear2(out)
         out = self.actv(out)
         logits  = self.linear3(out)
-        logits  = torch.sigmoid(self.linear3(out))
         dist = distributions.Categorical(F.softmax(logits,dim=1))  
-        action  = dist.sample([1])
+        action  = dist.sample([1]).squeeze()
         if logit:
             out =  action, logits
         else:

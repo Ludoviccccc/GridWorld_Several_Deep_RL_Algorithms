@@ -15,6 +15,7 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
                      "reward": []}
         init_samp["state"] = torch.randint(0,env.Nx*env.Ny,(M,))
         init_samp["action"]  =  p(init_samp["state"])
+
         init_samp["new_state"], init_samp["reward"] = env.transitionvec(init_samp["action"], init_samp["state"])
         buffer.store(init_samp)
     listLosspi = []
