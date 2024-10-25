@@ -27,7 +27,7 @@ def A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, load
         collection(batch_size)
         #step 2
         samp = buffer.sample(batch_size)
-        for i in range(K):
+        while env.G!=samp["state"]:
             ap = p(samp["new_state"])
             #step 3 Q update
             targets = samp["reward"] + gamma*Qvalue(samp["new_state"],ap).squeeze()
