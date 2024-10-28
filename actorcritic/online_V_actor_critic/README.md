@@ -3,10 +3,11 @@
 In a loop:
 1. Initialize s at random <br>
 
-Tant que s!=sp <br>
-    2. Transition: choose action using policy $\pi$, change state $s$, collect reward $r$ <br>
+While s!=sp <br>
+    2. Transition: choose action using policy $\pi_{\theta}$, change state $s$, collect reward $r(s)$ <br>
     3. V(s) $\longleftarrow + \gamma$ V(sp) <br>
     4. Compute $\nabla_{\theta}J$ <br>
+    5. Update parameters $\theta$ 
     5. s $\longleftarrow$  sp <br>
 
 
