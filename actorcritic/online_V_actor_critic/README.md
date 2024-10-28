@@ -5,8 +5,8 @@ In a loop:
 
 Tant que s!=sp <br>
     2. Transition: choose action using policy $\pi$, change state $s$, collect reward $r$ <br>
-    3. V(s) <- r(s) + $\gamma$ V(sp) <br>
-    4. Compute $\nabla J$ <br>
-    5. s <-- sp <br>
+    3. V(s) $\longleftarrow + \gamma$ V(sp) <br>
+    4. Compute $\nabla_{\theta}J$ <br>
+    5. s $\longleftarrow$  sp <br>
 
 
