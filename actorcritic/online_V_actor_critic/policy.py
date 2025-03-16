@@ -2,6 +2,7 @@ import torch
 from torch import distributions
 import torch.nn as nn
 import torch.nn.functional as F
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class policy(nn.Module):
     def __init__(self, env):
         super(policy,self).__init__()
@@ -15,7 +16,7 @@ class policy(nn.Module):
         self.actv = nn.ReLU()
     def forward(self, x, logit =False):
         "x is an iterable of scalar"
-        out = self.linear1(self.env.representation(x))
+        out = self.linear1(self.env.representation(x).to(device))
         out = self.actv(out)
         out = self.linear2(out)
         out = self.actv(out)

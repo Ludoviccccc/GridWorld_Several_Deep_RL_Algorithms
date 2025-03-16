@@ -33,8 +33,8 @@ if __name__=="__main__":
 
     print("ob", ob)
     env = grid(nx,ny,G = G, obstacles_encod = ob) 
-    p = policy(env)
-    Vfunc = V(env)
+    p = policy(env).cuda()
+    Vfunc = V(env).cuda()
     optimizerpi = optim.Adam(p.parameters(), lr = lr) 
     optimizerV = optim.Adam(Vfunc.parameters(), lr = lr) 
     if start>0:

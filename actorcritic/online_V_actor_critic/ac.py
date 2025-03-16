@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsave=100, epsilon = 0., K = 20, start = 0, gamma = 0.9):
     def epsilon_greedy_policy(state_vec):
         out = [] 
@@ -17,14 +17,14 @@ def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsav
         return out
     def updateV(samp, targets):
         optimizerV.zero_grad()
-        loss = F.mse_loss(Vfunc(samp["state"]).squeeze(),targets.squeeze())
+        loss = F.mse_loss(Vfunc(samp["state"]).squeeze(),targets.squeeze().cuda())
         loss.backward()
         optimizerV.step()
         return loss
     def updatePolicy(advantage, sample):
         _, logits_a = p(samp["state"], logit = True)
-        logpi = F.cross_entropy(logits_a,env.representationaction(sample["action"]),weight = None, reduction = 'none')
-        NegativPseudoLoss = torch.mean(torch.mul(logpi,advantage))
+        logpi = F.cross_entropy(logits_a,env.representationaction(sample["action"]).cuda(),weight = None, reduction = 'none')
+        NegativPseudoLoss = torch.mean(torch.mul(logpi,advantage)) # This is online update for actor critic
         NegativPseudoLoss.backward()
         optimizerpi.step()
         return NegativPseudoLoss
@@ -40,13 +40,13 @@ def AC(Vfunc,optimizerV,p,optimizerpi,env, n_episodes, loadpath,loadopt, freqsav
             samp["action"] = epsilon_greedy_policy(samp["state"])
             samp["new_state"], samp["reward"] = env.transitionvec(samp["action"], samp["state"])
             #targets computation
-            targets = samp["reward"] + gamma*Vfunc(samp["new_state"]).squeeze()
+            targets = samp["reward"].to(device) + gamma*Vfunc(samp["new_state"]).squeeze()
             targets = targets.detach()
             #V update 
             for l in range(K):
                 loss = updateV(samp, targets)
             #advantage evaluation
-            advantage = samp["reward"] + gamma*Vfunc(samp["new_state"]).squeeze() - Vfunc(samp["state"]).squeeze()
+            advantage = samp["reward"].cuda() + gamma*Vfunc(samp["new_state"]).squeeze() - Vfunc(samp["state"]).squeeze()
             advantage = advantage.detach()
             optimizerpi.zero_grad()
             #Policy update

@@ -14,27 +14,27 @@ import matplotlib.pyplot as plt
 
         
 if __name__=="__main__":
-    train = False
+    train = True
     test = True
-    start = 4000
+    start = 1000
     epsilon = 0.1
     gamma = .9
     nx = 6
     ny = 6
     G = 10
     N = 3 
-    batch_size = 10
+    batch_size = 5
     maxsize = 10
     K = 5
-    n_epochs = 10000
+    n_epochs = 1000
     loadpath = "loads"
     loadopt = "opt"
 
     env = grid(nx,ny,G = G) 
     p = policy(env)
     Qvalue = Q(env)
-    optimizerpi = optim.Adam(p.parameters(), lr = 1e-2) 
-    optimizerQ = optim.Adam(Qvalue.parameters(), lr = 1e-2) 
+    optimizerpi = optim.Adam(p.parameters(), lr = 1e-3) 
+    optimizerQ = optim.Adam(Qvalue.parameters(), lr = 1e-3) 
     buffer = Buffer(maxsize)
 
     if start>0:
@@ -44,9 +44,5 @@ if __name__=="__main__":
         optimizerQ.load_state_dict(torch.load(os.path.join(loadopt, f"opt_q_load_{start}.pt"),weights_only=True))
     if train:
         listLosspi,N = A2C(buffer,Qvalue,optimizerQ,p,optimizerpi,env,N, batch_size, n_epochs, loadpath,loadopt, epsilon, start = 0, gamma = gamma, K = K)
-        #print("listLosspi", listLosspi)
-        """
-        Il faut que la negativ pseudo loss decroisse en avec le nombre d'epochs, ce qui est bien le cas
-        """
     if test:
         testfunc(p, env, epsilon = 0, plot = True)

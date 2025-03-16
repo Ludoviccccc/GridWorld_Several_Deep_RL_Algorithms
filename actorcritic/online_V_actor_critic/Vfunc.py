@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class V(nn.Module):
     def __init__(self,env):
         super(V,self).__init__()
@@ -12,7 +13,7 @@ class V(nn.Module):
         self.actv = nn.ReLU()
 
     def forward(self, s):
-        x = self.env.representation(s)
+        x = self.env.representation(s).to(device)
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)

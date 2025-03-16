@@ -14,9 +14,9 @@ from agent import Agent
 
         
 if __name__=="__main__":
-    train = False
+    train = True
     testmode = True
-    start = 10000
+    start = 0
     epsilon = 0.1
     gamma = .9
     nx = 5
