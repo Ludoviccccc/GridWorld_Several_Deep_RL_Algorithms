@@ -1,1 +1,4 @@
-# Algorthme à corriger.
+# off-policy Online Q actor critic with a buffer
+take action $a \sim \pi_{\theta}(a|s), get(s,a',s',r) and store in $R$
+2. sample a batch ${s_{i}, a_{i},r_{i},s'_{i}}$ from buffer $R$
+3. update ${\hat{Q}}^{\pi}_{\Phi}$ using targets $y_{i} = r_{i} + \gamma{\hat{Q}}^{\pi}_{\Phi}$
