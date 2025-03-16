@@ -5,4 +5,4 @@
 
 3. update $\hat{Q}(\Phi)$ using targets $y_{i} = r_{i} + \gamma\hat{Q}({\Phi})$ for each $s_{i}, a_{i}$
 
-4. $\nabla_{\theta}J(\theta) = \frac{1}{N}\Sigma_{i}\nabla_{\theta}\pi_{\theta}({a_{i}}^{\pi}|s_{i})$
+4. $\nabla_{\theta}J(\theta) = \frac{1}{N}\Sigma_{i}\nabla_{\theta}\pi_{\theta}({a_{i}}^{\pi}|s_{i})\hat{Q}({\Phi})(s'_{i},{a_i}^{\pi})$
