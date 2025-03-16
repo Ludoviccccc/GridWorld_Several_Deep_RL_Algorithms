@@ -1,6 +1,6 @@
 # off-policy Online Q actor critic with a buffer
 1. take action $a \sim \pi_{\theta}(a|s)$, get $(s,a',s',r)$ and store in $R$
 
-2. sample a batch ${s{i}, a{i},r{i},s{p}$ from buffer.
+2. sample a batch $(s{i}, a{i},r{i},s{p})$ from buffer.
 
 3. update ${\hat{Q}}{phi}$ using targets $y_{i} = r_{i} + \gamma\hat{Q}{phi}$
