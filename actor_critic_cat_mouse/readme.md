@@ -1,1 +1,1 @@
-jeu du chat et de la souris avec un algo de qlearning basique. Le chat recoit une recompense de 0 lorsque qu'il n'attrape pas la souris et une récompense de 1 lorsqu'il l'attrape. La souris recoit une récompense de -1 lorsqu'elle se fait attraper.
+blablabla
