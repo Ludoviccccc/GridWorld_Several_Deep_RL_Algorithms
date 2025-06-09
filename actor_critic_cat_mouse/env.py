@@ -25,6 +25,8 @@ class grid:
         self.C = C
         self.states_encod = torch.eye(self.Nx*self.Ny).unsqueeze(0)
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
+        self.cat = torch.randint(0,env.Nx*env.Ny,(1,)) 
+        self.mouse = torch.randint(0,env.Nx*env.Ny,(1,)) 
     def reset(self):
         self.S = torch.randint(0,self.Nx*self.Ny,(1,))
         self.C = torch.randint(0,self.Nx*self.Ny,(1,))
