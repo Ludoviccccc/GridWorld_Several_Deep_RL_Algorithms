@@ -11,14 +11,25 @@ import os
 from qlearning import qlearn, test
 import matplotlib.pyplot as plt
 
-
-def test(q_tab, pi_tab):
-    s_tab = [1.0*torch.randint(0,env.Nx*env.Ny,(1,)) for j in range(2)]
+class Representation:
+    def __init__(self,Nx,Ny):
+        self.Nx = Nx
+        self.Ny = Ny
+        self.states_encod = torch.eye(self.Nx*self.Ny)
+    def representation(self,s,c):
+        out1 = (-1)*pad_sequence([self.states_encod[0,:,int(i)] for i in c]).permute(1,0)
+        out2 =      pad_sequence([self.states_encod[0,:,int(i)] for i in s]).permute(1,0)
+        return torch.cat((out1,out2))
+def test(q_tab, pi_tab,R):
+    s_tab = [torch.randint(0,env.Nx*env.Ny,(1,)) for j in range(2)]
     while s_tab[0]!=s_tab[1]:
         a_tab = []
         for k in range(2):
-            a_tab.append(pi_tab[k](s_tab[k]))
+            rep = R.states_encod[s_tab[k]]
+            a_tab.append(pi_tab[k](rep))
+        print(a_tab)
         s_tab_prim,reward_tab = env.transition(a_tab)
+        exit()
         #buffer.store(buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_tab}))
         s_tab = s_tab_prim
 if __name__=="__main__":
@@ -35,4 +46,5 @@ if __name__=="__main__":
     q_tab = [Q(nx,ny,env.Na) for j in range(2)]
     pi_tab = [policy(nx,ny,env.Na) for j in range(2)]
     optimizerQ_tab = [optim.Adam(q_tab[j].parameters(), lr = lr) for j in range(2)]
-    test(q_tab, pi_tab)
+    R = Representation(env.Nx, env.Ny)
+    test(q_tab, pi_tab,R)
