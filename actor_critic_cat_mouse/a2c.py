@@ -62,7 +62,7 @@ def A2C(buffer,
             for k in range(2):
                 a_tab.append(p_tab[k](s_tab[k]))
             s_tab_prim,reward_tab = env.transition(a_tab)
-            buffer.store(buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_tab}))
+            buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_tab})
             s_tab = s_tab_prim
             for l,Q in enumerate(Q_tab):
                 sample = buffer.sample(min(batch_size,len(buffer.memory_state)))

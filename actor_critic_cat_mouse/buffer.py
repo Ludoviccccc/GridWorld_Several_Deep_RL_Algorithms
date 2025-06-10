@@ -5,12 +5,12 @@ class Buffer:
         self.memory_action = []
         self.memory_newstate = []
         self.memory_reward = []
-    def store(self,states,actions,new_state,reward):
-        for j in range(len(states)):
-            self.memory_state.append(states[j])
-            self.memory_action.append(actions[j])
-            self.memory_newstate.append(new_state[j])
-            self.memory_reward.append(reward[j])
+    def store(self,pair):
+        for j in range(len(pair["state"])):
+            self.memory_state.append(pair["state"][j])
+            self.memory_action.append(pair["action"][j])
+            self.memory_newstate.append(pair["new_state"][j])
+            self.memory_reward.append(pair["reward"][j])
     def sample(self,N):
         assert(type(N)==int and N>0 and N<=len(self.memory_state))
         selection = torch.randint(0,len(self.memory_state),(N,))

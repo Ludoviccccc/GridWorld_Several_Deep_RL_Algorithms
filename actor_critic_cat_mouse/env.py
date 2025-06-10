@@ -25,17 +25,17 @@ class grid:
         self.C = C
         self.states_encod = torch.eye(self.Nx*self.Ny).unsqueeze(0)
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
-        self.cat = torch.randint(0,env.Nx*env.Ny,(1,)) 
-        self.mouse = torch.randint(0,env.Nx*env.Ny,(1,)) 
+        self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
+        self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
     def reset(self):
         self.S = torch.randint(0,self.Nx*self.Ny,(1,))
         self.C = torch.randint(0,self.Nx*self.Ny,(1,))
     def transition(self,a_tab):
-        self.cat = self.transition_single_agent(self.cat) 
-        self.mouse = self.transition_single_agent(self.mouse) 
-        reward [self.reward_chat(), self.reward_souris]
+        self.cat = self.transition_single_agent(self.cat,a_tab[0]) 
+        self.mouse = self.transition_single_agent(self.mouse,a_tab[1]) 
+        reward = [self.reward_chat(self.cat,self.mouse), self.reward_souris(self.mouse,self.cat)]
         return [self.cat, self.mouse],reward 
-    def transition_single_agent(self,s):
+    def transition_single_agent(self,s,a):
         assert(0<=s<self.Nx*self.Ny)
         d = self.actions[a]
         s_couple = (s//self.Ny, s%self.Ny)
@@ -46,10 +46,10 @@ class grid:
         else:
             s_out = s
         return s_out
-    def reward_chat(self,s_out,s_souris):
+    def reward_chat(self,s_chat,s_souris):
         reward = self.cat==self.mouse 
         return reward
-    def reward_souris(self,s_out,s_chat):
+    def reward_souris(self,s_souris,s_chat):
         reward = (self.cat==self.mouse)*(-10)
         #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
         #    reward+=5
