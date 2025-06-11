@@ -45,15 +45,14 @@ def A2C(buffer,
         NegativPseudoLoss.backward()
         optimizerpi.step()
         return NegativPseudoLoss
-    def epsilon_greedy_policy(state_vec):                                                                                                                                                                   
-        out = []                                                                                                                                                                                            
-        for s in state_vec:                                                                                                                                                                                 
-            if torch.bernoulli(torch.Tensor([epsilon])):                                                                                                                                                    
-                out.append(torch.randint(0,env.Na,(1,))[0])                                                                                                                                                 
-            else:                                                                       
-                out.append(int(p([s]).detach().item()))
-        return torch.Tensor(out)
-
+    def epsilon_greedy_policy(state_vec,p):
+        out = []
+        for s in state_vec:
+            if torch.bernoulli(torch.Tensor([epsilon])):
+                out.append(torch.randint(0,env.Na,(1,))[0])
+            else:
+                out.append(int(p(rep_cl([s])).detach().item()))
+        return out[0] 
     for j in range(start,n_epochs+1):
         #step 1
         s_tab = [torch.randint(0,env.Nx*env.Ny,(1,)) for j in range(2)]
@@ -62,9 +61,11 @@ def A2C(buffer,
             a_tab = []
             for k in range(2):
                 #rep = represention.states_encod[s_tab[k]]
-                rep = rep_cl([s_tab[k]])
-                a_tab.append(p_tab[k](rep))
+                #rep = rep_cl([s_tab[k]])
+                #a_tab.append(p_tab[k](rep))
+                a_tab.append(epsilon_greedy_policy([s_tab[k]],p_tab[k]))
             #print("a tab", a_tab)
+            #exit()
             s_tab_prim,reward_tab = env.transition(a_tab)
             {"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]}
             buffer.store({"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]})

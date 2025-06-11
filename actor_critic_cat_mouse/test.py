@@ -27,8 +27,8 @@ if __name__=="__main__":
     start =0
     epsilon = 0.1
     gamma = .9
-    nx = 5
-    ny = 5
+    nx = 4
+    ny = 4
     lr = 1e-3
     N = 10
     batch_size = 32
