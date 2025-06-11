@@ -13,7 +13,6 @@ class grid:
         self.table_fromage = torch.zeros((Nx,Ny)) 
         self.fromage = torch.randn((3,2))
         for f in self.fromage:
-            print(f)
             self.table_fromage[int(f[0]),int(f[1])] = 1
         self.epsilon = epsilon
         self.Na = len(self.actions)
@@ -30,7 +29,8 @@ class grid:
     def reset(self):
         self.S = torch.randint(0,self.Nx*self.Ny,(1,))
         self.C = torch.randint(0,self.Nx*self.Ny,(1,))
-    def transition(self,a_tab):
+    def transition(self,a_tab:list):
+        assert len(a_tab)==2, "wrong len"
         self.cat = self.transition_single_agent(self.cat,a_tab[0]) 
         self.mouse = self.transition_single_agent(self.mouse,a_tab[1]) 
         reward = [self.reward_chat(self.cat,self.mouse), self.reward_souris(self.mouse,self.cat)]
@@ -47,10 +47,10 @@ class grid:
             s_out = s
         return s_out
     def reward_chat(self,s_chat,s_souris):
-        reward = self.cat==self.mouse 
+        reward = (self.cat==self.mouse) *1.0
         return reward
     def reward_souris(self,s_souris,s_chat):
-        reward = (self.cat==self.mouse)*(-10)
+        reward = (self.cat==self.mouse)*(-1.0)
         #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
         #    reward+=5
         #self.table_fromage[s_out[0],s_out[1]]=0

@@ -7,18 +7,10 @@ from Qfunc import Q
 from buffer import Buffer
 from env import grid
 import os
-from qlearning import qlearn, test
+#from qlearning import qlearn, test
 import matplotlib.pyplot as plt
-
-class Representation:
-    def __init__(self,Nx,Ny):
-        self.Nx = Nx
-        self.Ny = Ny
-        self.states_encod = torch.eye(self.Nx*self.Ny)
-    def representation(self,s,c):
-        out1 = (-1)*pad_sequence([self.states_encod[0,:,int(i)] for i in c]).permute(1,0)
-        out2 =      pad_sequence([self.states_encod[0,:,int(i)] for i in s]).permute(1,0)
-        return torch.cat((out1,out2))
+from a2c import A2C
+from rep import Representation, Representation_action
 def test(q_tab, pi_tab,R, env,buffer):
     s_tab = [torch.randint(0,env.Nx*env.Ny,(1,)) for j in range(2)]
     while s_tab[0]!=s_tab[1]:
@@ -37,11 +29,19 @@ if __name__=="__main__":
     gamma = .9
     nx = 5
     ny = 5
-    lr = 1e-2
+    lr = 1e-3
+    N = 10
+    batch_size = 32
+    n_epochs = 500
+    loadpath = "loads"
+    loadopt = "opt"
     env = grid(nx,ny, gamma =gamma)
     buffer = Buffer()
     q_tab = [Q(nx,ny,env.Na) for j in range(2)]
     pi_tab = [policy(nx,ny,env.Na) for j in range(2)]
     optimizerQ_tab = [optim.Adam(q_tab[j].parameters(), lr = lr) for j in range(2)]
+    optimizerPi_tab = [optim.Adam(pi_tab[j].parameters(),lr=lr) for j in range(2)]
     R = Representation(env.Nx, env.Ny)
+    R_a = Representation_action(env.Na)
     test(q_tab, pi_tab,R, env,buffer)
+    tup = A2C(buffer, R,R_a,q_tab,optimizerQ_tab,pi_tab,optimizerPi_tab,env,N,batch_size,n_epochs,loadpath, loadopt)

@@ -4,14 +4,14 @@ import torch.nn.functional as F
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-
+from rep import Representation, Representation_action
 def A2C(buffer,
-        Q_tab,
-        optimizer_tab,
+        rep_cl:Representation,
+        rep_ac:Representation_action,
+        Q_tab:list,
+        optimizer_tab:list,
         p_tab,
         optimizerpi_tab,
-        Qvalue,
-        optimizerQ,
         env,N,
         batch_size,
         n_epochs,
@@ -22,23 +22,24 @@ def A2C(buffer,
         K = 1,
         start = 0, 
         gamma =.9):
-    listLosspi = []
-    listLossQ = []
+    listLosspi0 = []
+    listLossQ0 = []
+    listLosspi1 = []
+    listLossQ1 = []
     retour_episodes = []
-    def updateQ(optimizerQ, Qvalue,samp, targets):  
+    def updateQ(optimizerQ, Qvalue,states,actions, targets):  
         optimizerQ.zero_grad()
-        loss = F.mse_loss(Qvalue(samp["state"],samp["action"]).squeeze(),targets.squeeze())
+        loss = F.mse_loss(Qvalue(states,actions).squeeze(),targets.squeeze())
         loss.backward()
         optimizerQ.step()
         return loss
-    def updatePi(optimizerpi, p, samp):
-        print("samp",samp["state"].shape)
-        api, logits_ap = p(samp["state"], logit = True)
-        print("api",api)
-        print("logits", logits_ap)
+    def updatePi(Q,optimizerpi, p, state):
+        api, logits_ap = p(state, logit = True)
+        #print("api",api)
+        #print("logits", logits_ap)
         optimizerpi.zero_grad()
-        logpi = F.cross_entropy(logits_ap,env.representationaction(api),weight = None, reduction = 'none')
-        advantage = Qvalue(samp["state"],api).squeeze().detach()#-V_batch.detach() 
+        logpi = F.cross_entropy(logits_ap,rep_ac(api),weight = None, reduction = 'none')
+        advantage = Q(state,rep_ac(api)).squeeze().detach()#-V_batch.detach() 
         advantage = advantage.detach()
         NegativPseudoLoss = torch.mean(torch.mul(logpi,advantage))
         NegativPseudoLoss.backward()
@@ -60,35 +61,52 @@ def A2C(buffer,
         while s_tab[0]!=s_tab[1]:
             a_tab = []
             for k in range(2):
-                a_tab.append(p_tab[k](s_tab[k]))
+                #rep = represention.states_encod[s_tab[k]]
+                rep = rep_cl([s_tab[k]])
+                a_tab.append(p_tab[k](rep))
+            #print("a tab", a_tab)
             s_tab_prim,reward_tab = env.transition(a_tab)
-            buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_tab})
+            {"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]}
+            buffer.store({"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]})
             s_tab = s_tab_prim
             for l,Q in enumerate(Q_tab):
                 sample = buffer.sample(min(batch_size,len(buffer.memory_state)))
                 a_prim_tab = []
                 for m in range(2):
-                    a_prim_tab.append(p_tab[m](sample["new_state"][m]))
-                targets = samp["reward"] + gamma*Q(samp["new_state"],a_prim_tab).squeeze()
+                    a_prim_tab.append(p_tab[m](rep_cl(sample["new_state"][:,m])))
+                targets =  [sample["reward"][:,j] + torch.mul(gamma,q(rep_cl(sample["new_state"][:,j]),rep_ac(a_prim_tab[j])).squeeze()) for j,q in enumerate(Q_tab)]
                 #update critic
-                for k in range(K):
-                    loss = updateQ(optimizer_tab[l], Q, targets)   
+                loss = []
+                for m in range(2):
+                    for k in range(K):
+                        loss_ = updateQ(optimizer_tab[m], Q_tab[m],rep_cl(sample["state"][:,m]),rep_ac(sample["action"][:,m]), targets[m])   
+                    loss.append(loss_)
                 #update actor
-                NegativPseudoLoss = updatePi(optimizerpi_tab[l], p_tab[l], sample)   
+                NegativPseudoLoss = []
+                for m in range(2):
+                    NegativPseudoLoss.append(updatePi(Q_tab[m],optimizerpi_tab[m], p_tab[m], rep_cl(sample["state"][:,m])))
 
-        #    listLosspi.append(NegativPseudoLoss.item())
-        #    listLossQ.append(loss.item())
+            listLosspi0.append(NegativPseudoLoss[0].item())
+            listLosspi1.append(NegativPseudoLoss[1].item())
+            listLossQ0.append(loss[0].item())
+            listLossQ1.append(loss[1].item())
 
-        #if j%100==0:
-        #    print("epochs", j,f"/{n_epochs}")
-        #    print("NegativPseudoLoss",torch.mean(torch.Tensor(listLosspi)))
-        #    print("Loss Q", torch.mean(torch.Tensor(listLossQ)))
+        if j%100==0:
+            print("epochs", j,f"/{n_epochs}")
+            print("NegativPseudoLoss0",torch.mean(torch.Tensor(listLosspi0)))
+            print("NegativPseudoLoss1",torch.mean(torch.Tensor(listLosspi1)))
+            print("Loss Q0", torch.mean(torch.Tensor(listLossQ0)))
+            print("Loss Q1", torch.mean(torch.Tensor(listLossQ1)))
         #    if len(retour_episodes)>0:
         #        print("retour dernier episode", retour_episodes[-1])
-        #    torch.save(p.state_dict(), os.path.join(loadpath,f"pi_load_{j}.pt"))
-        #    torch.save(optimizerpi.state_dict(), os.path.join(loadopt,f"opt_pi_load_{j}.pt"))
-        #    torch.save(Qvalue.state_dict(), os.path.join(loadpath,f"q_load_{j}.pt"))
-        #    torch.save(optimizerQ.state_dict(), os.path.join(loadopt,f"opt_q_load_{j}.pt"))
+            torch.save(p_tab[0].state_dict(), os.path.join(loadpath,f"pi_0_load_{j}.pt"))
+            torch.save(p_tab[1].state_dict(), os.path.join(loadpath,f"pi_1_load_{j}.pt"))
+            torch.save(optimizerpi_tab[0].state_dict(), os.path.join(loadopt,f"opt_0_pi_load_{j}.pt"))
+            torch.save(optimizerpi_tab[1].state_dict(), os.path.join(loadopt,f"opt_1_pi_load_{j}.pt"))
+            torch.save(Q_tab[0].state_dict(), os.path.join(loadpath,f"q_0_load_{j}.pt"))
+            torch.save(Q_tab[1].state_dict(), os.path.join(loadpath,f"q_1_load_{j}.pt"))
+            torch.save(optimizer_tab[0].state_dict(), os.path.join(loadopt,f"opt_0_q_load_{j}.pt"))
+            torch.save(optimizer_tab[1].state_dict(), os.path.join(loadopt,f"opt_1_q_load_{j}.pt"))
 
         #if j%100==0 and j>100:
         #    list_retour, iterations = testfunc(p,env, epsilon)
@@ -111,7 +129,7 @@ def A2C(buffer,
         #    plt.legend()
         #    plt.savefig("Qloss")
         #    plt.close()
-    #return listLosspi, retour_episodes
+    return listLosspi0,listLosspi1,listLossQ0, listLossQ1
 
 
 
