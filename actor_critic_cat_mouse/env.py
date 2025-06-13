@@ -20,15 +20,13 @@ class grid:
         self.Ny = Ny
         self.R = -1
         self.gamma = gamma
-        self.S = S
-        self.C = C
         self.states_encod = torch.eye(self.Nx*self.Ny).unsqueeze(0)
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
     def reset(self):
-        self.S = torch.randint(0,self.Nx*self.Ny,(1,))
-        self.C = torch.randint(0,self.Nx*self.Ny,(1,))
+        self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
+        self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
     def transition(self,a_tab:list):
         assert len(a_tab)==2, "wrong len"
         self.cat = self.transition_single_agent(self.cat,a_tab[0]) 
@@ -66,11 +64,14 @@ class grid:
         else:
             s_out = s
         return s_out
-    def grid(self,s_souris,s_chat):
+    def grid(self):
+        s_souris = self.mouse
+        s_chat = self.cat
         T = np.zeros((self.Nx,self.Ny))
         T[s_souris//self.Ny, s_souris%self.Ny] = 1
         T[s_chat//self.Ny, s_chat%self.Ny] = -1
         print(T)
+        return T
     def tensor_state(self,s):
         return self.states_encod[:,:,s]
     def zero_one(self,state,J):

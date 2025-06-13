@@ -5,6 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from rep import Representation, Representation_action
+from env import grid
 def A2C(buffer,
         rep_cl:Representation,
         rep_ac:Representation_action,
@@ -12,7 +13,8 @@ def A2C(buffer,
         optimizer_tab:list,
         p_tab,
         optimizerpi_tab,
-        env,N,
+        env:grid,
+        N,
         batch_size,
         n_epochs,
         loadpath,
@@ -55,21 +57,19 @@ def A2C(buffer,
         return out[0] 
     for j in range(start,n_epochs+1):
         #step 1
-        s_tab = [torch.randint(0,env.Nx*env.Ny,(1,)) for j in range(2)]
+        env.reset()
+        s_tab = [env.cat, env.mouse]
         print(f"episode {j}")
         while s_tab[0]!=s_tab[1]:
             a_tab = []
             for k in range(2):
-                #rep = represention.states_encod[s_tab[k]]
-                #rep = rep_cl([s_tab[k]])
-                #a_tab.append(p_tab[k](rep))
                 a_tab.append(epsilon_greedy_policy([s_tab[k]],p_tab[k]))
-            #print("a tab", a_tab)
-            #exit()
             s_tab_prim,reward_tab = env.transition(a_tab)
             {"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]}
             buffer.store({"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]})
             s_tab = s_tab_prim
+            if j<1:
+                continue
             for l,Q in enumerate(Q_tab):
                 sample = buffer.sample(min(batch_size,len(buffer.memory_state)))
                 a_prim_tab = []
