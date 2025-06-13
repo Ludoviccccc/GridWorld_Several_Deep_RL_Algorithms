@@ -6,12 +6,12 @@ class Q(nn.Module):
         self.Nx = Nx
         self.Ny = Ny
         self.Na = Na
-        self.linear1 = nn.Linear(self.Ny*self.Nx + Na,16)
+        self.linear1 = nn.Linear(2*self.Ny*self.Nx + 2*Na,16)
         self.linear2 = nn.Linear(16,16)
         self.linear3 = nn.Linear(16,1)
         self.actv = nn.ReLU()
-    def forward(self, s,a):
-        x = torch.cat((s,a),dim=1)
+    def forward(self, s0,s1,a0,a1):
+        x = torch.cat((s0,s1,a0,a1),dim=1)
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)

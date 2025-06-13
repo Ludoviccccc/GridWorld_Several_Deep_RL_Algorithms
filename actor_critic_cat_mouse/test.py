@@ -11,7 +11,7 @@ import os
 import matplotlib.pyplot as plt
 from a2c import A2C
 from rep import Representation, Representation_action
-def test(q_tab, pi_tab,R, env,buffer):
+def test(q_tab:list[Q], pi_tab,R, env,buffer):
     #s_tab = [torch.randint(0,env.Nx*env.Ny,(1,)) for j in range(2)]
     s_tab = [env.cat, env.mouse]
     j =0
@@ -54,12 +54,13 @@ if __name__=="__main__":
     R = Representation(env.Nx, env.Ny)
     R_a = Representation_action(env.Na)
     if testmode:
-        q_tab[0].load_state_dict(torch.load(os.path.join(loadpath,f"q_0_load_{start}.pt"),weights_only=False))
-        q_tab[1].load_state_dict(torch.load(os.path.join(loadpath,f"q_1_load_{start}.pt"),weights_only=False))
-        pi_tab[0].load_state_dict(torch.load(os.path.join(loadpath,f"pi_0_load_{start}.pt"),weights_only=False))
-        pi_tab[1].load_state_dict(torch.load(os.path.join(loadpath,f"pi_1_load_{start}.pt"),weights_only=False))
-        #q_tab[0].load_state_dict(torch.load(os.path.join(loadopt,f"opt_0_q_load_{start}.pt")))
-        #q_tab[1].load_state_dict(torch.load(os.path.join(loadopt,f"opt_1_q_load_{start}.pt")))
+        if take_load:
+            q_tab[0].load_state_dict(torch.load(os.path.join(loadpath,f"q_0_load_{start}.pt"),weights_only=False))
+            q_tab[1].load_state_dict(torch.load(os.path.join(loadpath,f"q_1_load_{start}.pt"),weights_only=False))
+            pi_tab[0].load_state_dict(torch.load(os.path.join(loadpath,f"pi_0_load_{start}.pt"),weights_only=False))
+            pi_tab[1].load_state_dict(torch.load(os.path.join(loadpath,f"pi_1_load_{start}.pt"),weights_only=False))
+            #q_tab[0].load_state_dict(torch.load(os.path.join(loadopt,f"opt_0_q_load_{start}.pt")))
+            #q_tab[1].load_state_dict(torch.load(os.path.join(loadopt,f"opt_1_q_load_{start}.pt")))
         test(q_tab, pi_tab,R, env,buffer)
     if train:
         tup = A2C(buffer, R,R_a,q_tab,optimizerQ_tab,pi_tab,optimizerPi_tab,env,N,batch_size,n_epochs,loadpath, loadopt,K=1)
