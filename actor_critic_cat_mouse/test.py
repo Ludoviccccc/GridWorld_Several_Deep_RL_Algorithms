@@ -34,15 +34,15 @@ def test(q_tab:list[Q], pi_tab,R, env,buffer):
 if __name__=="__main__":
     train = True
     testmode = False
-    start = 100
-    epsilon = 1.0
+    start = 0
+    epsilon = .3
     gamma = .95
     nx = 10
     ny = 5
     lr = 1e-3
     N = 10
     batch_size = 64
-    n_epochs = 500
+    n_epochs = 101
     loadpath = "loads"
     loadopt = "opt"
     take_load = False

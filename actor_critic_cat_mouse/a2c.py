@@ -86,7 +86,7 @@ def A2C(buffer,
                 a_prim_tab = []
                 for m in range(2):
                     a_prim_tab.append(p_tab[m](rep_cl(sample["new_state"][:,0]),rep_cl(sample["new_state"][:,1])))
-                targets =  sample["reward"][:,j] + torch.mul(gamma,q(rep_cl(sample["new_state"][:,0]),
+                targets =  sample["reward"][:,l] + torch.mul(gamma,Q(rep_cl(sample["new_state"][:,0]),
                                                                      rep_cl(sample["new_state"][:,1]),
                                                                      rep_ac(a_prim_tab[0]),
                                                                      rep_ac(a_prim_tab[1])).squeeze())
@@ -110,8 +110,8 @@ def A2C(buffer,
                                 rep_ac
                                 )
                 NegativPseudoLoss.append(nploss)
-            listLossQ0.append(loss[0].item())
-            listLossQ1.append(loss[1].item())
+            #listLossQ0.append(loss[0].item())
+            #listLossQ1.append(loss[1].item())
 
         if j%100==0:
             print("epochs", j,f"/{n_epochs}")
