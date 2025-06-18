@@ -7,6 +7,28 @@ import numpy as np
 from rep import Representation, Representation_action
 from env import grid
 from Qfunc import Q
+from policy import policy
+
+def updatePi(Q_tab:list[Q],optimizerpi_tab:list, p_tab:list[policy], s_tab:list,rep_ac:Representation_action):
+    api0, logits_ap0 = p_tab[0](s_tab[0], logit = True)
+    api1, logits_ap1 = p_tab[1](s_tab[1], logit = True)
+
+    optimizerpi_tab[0].zero_grad()
+    logpi0 = F.cross_entropy(logits_ap0,rep_ac(api0),weight = None, reduction = 'none')
+    advantage0 = Q_tab[0](s_tab[0],s_tab[1],rep_ac(api0),rep_ac(api1)).squeeze().detach()#-V_batch.detach() 
+    advantage0 = advantage0.detach()
+    NegativPseudoLoss0 = torch.mean(torch.mul(logpi0,advantage0)) 
+    NegativPseudoLoss0.backward()
+    optimizerpi_tab[0].step()
+
+    optimizerpi_tab[1].zero_grad()
+    logpi1 = F.cross_entropy(logits_ap1,rep_ac(api1),weight = None, reduction = 'none')
+    advantage1 = Q_tab[1](s_tab[0],s_tab[1],rep_ac(api0),rep_ac(api1)).squeeze().detach()#-V_batch.detach() 
+    advantage1 = advantage1.detach()
+    NegativPseudoLoss1 = torch.mean(torch.mul(logpi1,advantage1)) 
+    NegativPseudoLoss1.backward()
+    optimizerpi_tab[1].step()
+    return NegativPseudoLoss0, NegativPseudoLoss1
 def A2C(buffer,
         rep_cl:Representation,
         rep_ac:Representation_action,
@@ -36,17 +58,6 @@ def A2C(buffer,
         loss.backward()
         optimizerQ.step()
         return loss
-    def updatePi(Q,optimizerpi, p_tab, s_tab):
-        api0, logits_ap0 = p[0](s_tab[0], logit = True)
-        api1, logits_ap1 = p[1](s_tab[1], logit = True)
-        optimizerpi[0].zero_grad()
-        logpi0 = F.cross_entropy(logits_ap0,rep_ac(api0),weight = None, reduction = 'none')
-        advantage0 = Q[0](s_tab[0],s_tab[1],rep_ac(api0),rep_ac(api1)).squeeze().detach()#-V_batch.detach() 
-        advantage0 = advantage.detach()
-        NegativPseudoLoss0 = torch.mean(torch.mul(logpi0,advantage0)) 
-        NegativPseudoLoss0.backward()
-        optimizerpi[0].step()
-        return NegativPseudoLoss
     def epsilon_greedy_policy(state_vec,p):
         out = []
         for s in state_vec:
@@ -70,6 +81,7 @@ def A2C(buffer,
             s_tab = s_tab_prim
             if j<10:
                 continue
+            epsilon = max(.1,epsilon*.98)
             for l,Q in enumerate(Q_tab):
                 sample = buffer.sample(min(batch_size,len(buffer.memory_state)))
                 a_prim_tab = []
@@ -90,17 +102,16 @@ def A2C(buffer,
                     loss.append(loss_)
                 #update actor
                 NegativPseudoLoss = []
-                for m in range(2):
-                    NegativPseudoLoss.append(updatePi(Q_tab[m],
-                                                    optimizerpi_tab[m],
-                                                    p_tab[m],
-                                                    p_tab[1-m],
-                                                    rep_cl(sample["state"][:,0]),
-                                                    rep_cl(sample["state"][:,1])
+                NegativPseudoLoss.append(updatePi(Q_tab,
+                                                    optimizerpi_tab,
+                                                    p_tab,
+                                                    [rep_cl(sample["state"][:,0]),
+                                                    rep_cl(sample["state"][:,1])],
+                                                    rep_ac
                                                     ))
 
-            listLosspi0.append(NegativPseudoLoss[0].item())
-            listLosspi1.append(NegativPseudoLoss[1].item())
+            #listLosspi0.append(N0.item())
+            #listLosspi1.append(N1.item())
             listLossQ0.append(loss[0].item())
             listLossQ1.append(loss[1].item())
 
