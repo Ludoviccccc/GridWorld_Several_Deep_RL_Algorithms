@@ -10,8 +10,8 @@ from Qfunc import Q
 from policy import policy
 
 def updatePi(Q_tab:list[Q],optimizerpi_tab:list, p_tab:list[policy], s_tab:list,rep_ac:Representation_action):
-    api0, logits_ap0 = p_tab[0](s_tab[0], logit = True)
-    api1, logits_ap1 = p_tab[1](s_tab[1], logit = True)
+    api0, logits_ap0 = p_tab[0](s_tab[0],s_tab[1], logit = True)
+    api1, logits_ap1 = p_tab[1](s_tab[0],s_tab[1], logit = True)
 
     optimizerpi_tab[0].zero_grad()
     logpi0 = F.cross_entropy(logits_ap0,rep_ac(api0),weight = None, reduction = 'none')
@@ -64,7 +64,7 @@ def A2C(buffer,
             if torch.bernoulli(torch.Tensor([epsilon])):
                 out.append(torch.randint(0,env.Na,(1,))[0])
             else:
-                out.append(int(p(rep_cl([s])).detach().item()))
+                out.append(int(p(rep_cl([state_vec[0]]),rep_cl([state_vec[1]])).detach().item()))
         return out[0] 
     for j in range(start,n_epochs+1):
         #step 1
@@ -74,9 +74,8 @@ def A2C(buffer,
         while s_tab[0]!=s_tab[1]:
             a_tab = []
             for k in range(2):
-                a_tab.append(epsilon_greedy_policy([s_tab[k]],p_tab[k]))
+                a_tab.append(epsilon_greedy_policy(s_tab,p_tab[k]))
             s_tab_prim,reward_tab = env.transition(a_tab)
-            {"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]}
             buffer.store({"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]})
             s_tab = s_tab_prim
             if j<10:
@@ -86,32 +85,31 @@ def A2C(buffer,
                 sample = buffer.sample(min(batch_size,len(buffer.memory_state)))
                 a_prim_tab = []
                 for m in range(2):
-                    a_prim_tab.append(p_tab[m](rep_cl(sample["new_state"][:,m])))
-                targets =  [sample["reward"][:,j] + torch.mul(gamma,q(rep_cl(sample["new_state"][:,0]),rep_cl(sample["new_state"][:,1]),rep_ac(a_prim_tab[0]),rep_ac(a_prim_tab[1])).squeeze()) for j,q in enumerate(Q_tab)]
+                    a_prim_tab.append(p_tab[m](rep_cl(sample["new_state"][:,0]),rep_cl(sample["new_state"][:,1])))
+                targets =  sample["reward"][:,j] + torch.mul(gamma,q(rep_cl(sample["new_state"][:,0]),
+                                                                     rep_cl(sample["new_state"][:,1]),
+                                                                     rep_ac(a_prim_tab[0]),
+                                                                     rep_ac(a_prim_tab[1])).squeeze())
                 #update critic
                 loss = []
-                for m in range(2):
-                    for k in range(K):
-                        loss_ = updateQ(optimizer_tab[m],
-                                        Q_tab[m],
-                                        rep_cl(sample["state"][:,0]),
-                                        rep_cl(sample["state"][:,1]),
-                                        rep_ac(sample["action"][:,0]),
-                                        rep_ac(sample["action"][:,1]),
-                                        targets[m])   
-                    loss.append(loss_)
+                loss_ = updateQ(optimizer_tab[l],
+                                Q_tab[l],
+                                rep_cl(sample["state"][:,0]),
+                                rep_cl(sample["state"][:,1]),
+                                rep_ac(sample["action"][:,0]),
+                                rep_ac(sample["action"][:,1]),
+                                targets)   
+                loss.append(loss_)
                 #update actor
                 NegativPseudoLoss = []
-                NegativPseudoLoss.append(updatePi(Q_tab,
-                                                    optimizerpi_tab,
-                                                    p_tab,
-                                                    [rep_cl(sample["state"][:,0]),
-                                                    rep_cl(sample["state"][:,1])],
-                                                    rep_ac
-                                                    ))
-
-            #listLosspi0.append(N0.item())
-            #listLosspi1.append(N1.item())
+                nploss = updatePi(Q_tab,
+                                optimizerpi_tab,
+                                p_tab,
+                                [rep_cl(sample["state"][:,0]),
+                                rep_cl(sample["state"][:,1])],
+                                rep_ac
+                                )
+                NegativPseudoLoss.append(nploss)
             listLossQ0.append(loss[0].item())
             listLossQ1.append(loss[1].item())
 
