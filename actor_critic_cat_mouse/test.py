@@ -31,12 +31,13 @@ def test(q_tab:list[Q], pi_tab,R, env,buffer):
         j+=1
         plt.imshow(T)
         plt.savefig(f"image/frame{j}")
+    exit()
 if __name__=="__main__":
-    train = True
-    testmode = False
-    start = 0
-    epsilon = .3
-    gamma = .95
+    train = False
+    testmode = True
+    start = 100
+    epsilon = .2
+    gamma = .98
     nx = 10
     ny = 5
     lr = 1e-3

@@ -9,26 +9,14 @@ from env import grid
 from Qfunc import Q
 from policy import policy
 
-def updatePi(Q_tab:list[Q],optimizerpi_tab:list, p_tab:list[policy], s_tab:list,rep_ac:Representation_action):
-    api0, logits_ap0 = p_tab[0](s_tab[0],s_tab[1], logit = True)
-    api1, logits_ap1 = p_tab[1](s_tab[0],s_tab[1], logit = True)
-
-    optimizerpi_tab[0].zero_grad()
-    logpi0 = F.cross_entropy(logits_ap0,rep_ac(api0),weight = None, reduction = 'none')
-    advantage0 = Q_tab[0](s_tab[0],s_tab[1],rep_ac(api0),rep_ac(api1)).squeeze().detach()#-V_batch.detach() 
-    advantage0 = advantage0.detach()
-    NegativPseudoLoss0 = torch.mean(torch.mul(logpi0,advantage0)) 
-    NegativPseudoLoss0.backward()
-    optimizerpi_tab[0].step()
-
-    optimizerpi_tab[1].zero_grad()
-    logpi1 = F.cross_entropy(logits_ap1,rep_ac(api1),weight = None, reduction = 'none')
-    advantage1 = Q_tab[1](s_tab[0],s_tab[1],rep_ac(api0),rep_ac(api1)).squeeze().detach()#-V_batch.detach() 
-    advantage1 = advantage1.detach()
-    NegativPseudoLoss1 = torch.mean(torch.mul(logpi1,advantage1)) 
-    NegativPseudoLoss1.backward()
-    optimizerpi_tab[1].step()
-    return NegativPseudoLoss0, NegativPseudoLoss1
+def updatePi(Q:Q,optimizerpi,api0,api1,logpi, s_tab:list,rep_ac:Representation_action):
+    optimizerpi.zero_grad()
+    advantage = Q(s_tab[0],s_tab[1],rep_ac(api0),rep_ac(api1)).squeeze().detach()
+    advantage = advantage.detach()
+    NegativPseudoLoss = torch.mean(torch.mul(logpi,advantage)) 
+    NegativPseudoLoss.backward()
+    optimizerpi.step()
+    return NegativPseudoLoss
 def A2C(buffer,
         rep_cl:Representation,
         rep_ac:Representation_action,
@@ -71,13 +59,15 @@ def A2C(buffer,
         env.reset()
         s_tab = [env.cat, env.mouse]
         print(f"episode {j}")
-        while s_tab[0]!=s_tab[1]:
+        n = 0
+        while s_tab[0]!=s_tab[1] and n!=100:
             a_tab = []
             for k in range(2):
                 a_tab.append(epsilon_greedy_policy(s_tab,p_tab[k]))
             s_tab_prim,reward_tab = env.transition(a_tab)
             buffer.store({"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]})
             s_tab = s_tab_prim
+            n+=1
             if j<10:
                 continue
             epsilon = max(.1,epsilon*.98)
@@ -93,7 +83,7 @@ def A2C(buffer,
                 #update critic
                 loss = []
                 loss_ = updateQ(optimizer_tab[l],
-                                Q_tab[l],
+                                Q,
                                 rep_cl(sample["state"][:,0]),
                                 rep_cl(sample["state"][:,1]),
                                 rep_ac(sample["action"][:,0]),
@@ -102,13 +92,21 @@ def A2C(buffer,
                 loss.append(loss_)
                 #update actor
                 NegativPseudoLoss = []
-                nploss = updatePi(Q_tab,
-                                optimizerpi_tab,
-                                p_tab,
+
+                api0, logits_ap0 = p_tab[0](rep_cl(sample["state"][:,0]),rep_cl(sample["state"][:,1]), logit = True)
+                api1, logits_ap1 = p_tab[1](rep_cl(sample["state"][:,0]),rep_cl(sample["state"][:,1]), logit = True)
+                if l==0:
+                    logpi = F.cross_entropy(logits_ap0,rep_ac(api0),weight = None, reduction = 'none')
+                else:
+                    logpi = F.cross_entropy(logits_ap1,rep_ac(api1),weight = None, reduction = 'none')
+                nploss = updatePi(Q,
+                                optimizerpi_tab[l],
+                                api0,
+                                api1,
+                                logpi,
                                 [rep_cl(sample["state"][:,0]),
                                 rep_cl(sample["state"][:,1])],
-                                rep_ac
-                                )
+                                rep_ac)
                 NegativPseudoLoss.append(nploss)
             #listLossQ0.append(loss[0].item())
             #listLossQ1.append(loss[1].item())
@@ -121,6 +119,7 @@ def A2C(buffer,
             print("Loss Q1", torch.mean(torch.Tensor(listLossQ1)))
         #    if len(retour_episodes)>0:
         #        print("retour dernier episode", retour_episodes[-1])
+        if j%20==0 and j>0:
             torch.save(p_tab[0].state_dict(), os.path.join(loadpath,f"pi_0_load_{j}.pt"))
             torch.save(p_tab[1].state_dict(), os.path.join(loadpath,f"pi_1_load_{j}.pt"))
             torch.save(optimizerpi_tab[0].state_dict(), os.path.join(loadopt,f"opt_0_pi_load_{j}.pt"))
