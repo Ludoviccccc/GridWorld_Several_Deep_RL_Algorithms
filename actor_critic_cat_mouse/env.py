@@ -9,7 +9,7 @@ class grid:
     Envirnonement grille sur laquelle se deplace l'agent jusqu'à atteindre le point G
     """
     def __init__(self,Nx,Ny,gamma = .9,S = 3,C= 12,epsilon=0.05):
-        self.actions = [(0,1), (0, -1), (1, 0), (-1, 0),(1,1),(1,-1),(-1,-1),(-1,1)]
+        self.actions = [(0,0),(0,1), (0, -1), (1, 0), (-1, 0),(1,1),(1,-1),(-1,-1),(-1,1)]
         self.table_fromage = torch.zeros((Nx,Ny)) 
         self.fromage = torch.randn((3,2))
         for f in self.fromage:
@@ -31,7 +31,7 @@ class grid:
         assert len(a_tab)==2, "wrong len"
         self.cat = self.transition_single_agent(self.cat,a_tab[0]) 
         self.mouse = self.transition_single_agent(self.mouse,a_tab[1]) 
-        reward = [self.reward_chat(self.cat,self.mouse), self.reward_souris(self.mouse,self.cat)]
+        reward = [self.reward_cat(), self.reward_mouse()]
         return [self.cat, self.mouse],reward 
     def transition_single_agent(self,s,a):
         assert(0<=s<self.Nx*self.Ny)
@@ -44,16 +44,16 @@ class grid:
         else:
             s_out = s
         return s_out
-    def reward_chat(self,s_chat,s_souris):
-        reward = (self.cat==self.mouse) *1.0
+    def reward_cat(self):
+        reward = (self.cat!=self.mouse) *(-1.0)
         return reward
-    def reward_souris(self,s_souris,s_chat):
+    def reward_mouse(self):
         reward = (self.cat==self.mouse)*(-1.0)
         #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
         #    reward+=5
         #self.table_fromage[s_out[0],s_out[1]]=0
         return reward
-    def transition_souris(self,a,s,s_chat):
+    def transition_mouse(self,a,s,s_cat):
         assert(0<=s<self.Nx*self.Ny)
         d = self.actions[a]
         s_couple = (s//self.Ny, s%self.Ny)
@@ -65,11 +65,11 @@ class grid:
             s_out = s
         return s_out
     def grid(self):
-        s_souris = self.mouse
-        s_chat = self.cat
+        s_mouse = self.mouse
+        s_cat = self.cat
         T = np.zeros((self.Nx,self.Ny))
-        T[s_souris//self.Ny, s_souris%self.Ny] = 1
-        T[s_chat//self.Ny, s_chat%self.Ny] = -1
+        T[s_mouse//self.Ny, s_mouse%self.Ny] = 1
+        T[s_cat//self.Ny, s_cat%self.Ny] = -1
         print(T)
         return T
     def tensor_state(self,s):

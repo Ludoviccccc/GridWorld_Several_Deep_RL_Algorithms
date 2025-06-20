@@ -60,7 +60,7 @@ def A2C(buffer,
         s_tab = [env.cat, env.mouse]
         print(f"episode {j}")
         n = 0
-        while s_tab[0]!=s_tab[1] and n!=100:
+        while s_tab[0]!=s_tab[1] and n!=150:
             a_tab = []
             for k in range(2):
                 a_tab.append(epsilon_greedy_policy(s_tab,p_tab[k]))
@@ -90,7 +90,6 @@ def A2C(buffer,
                                 rep_ac(sample["action"][:,1]),
                                 targets)   
                 loss.append(loss_)
-                #update actor
                 NegativPseudoLoss = []
 
                 api0, logits_ap0 = p_tab[0](rep_cl(sample["state"][:,0]),rep_cl(sample["state"][:,1]), logit = True)
@@ -99,6 +98,7 @@ def A2C(buffer,
                     logpi = F.cross_entropy(logits_ap0,rep_ac(api0),weight = None, reduction = 'none')
                 else:
                     logpi = F.cross_entropy(logits_ap1,rep_ac(api1),weight = None, reduction = 'none')
+                #update actor
                 nploss = updatePi(Q,
                                 optimizerpi_tab[l],
                                 api0,
