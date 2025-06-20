@@ -33,7 +33,7 @@ def A2C(buffer,
         env:grid,
         N,
         batch_size,
-        n_epochs,
+        n_episodes,
         loadpath,
         loadopt,
         freqsave=100, 
@@ -41,11 +41,7 @@ def A2C(buffer,
         K = 1,
         start = 0, 
         gamma =.9):
-    listLosspi0 = []
-    listLossQ0 = []
-    listLosspi1 = []
-    listLossQ1 = []
-    retour_episodes = []
+    retour_episodes = {"cat":[],"mouse":[]}
     def updateQ(optimizerQ,
                 Qvalue,states0,
                 states1,
@@ -58,20 +54,20 @@ def A2C(buffer,
         optimizerQ.step()
         return loss
     def epsilon_greedy_policy(state_vec,p):
-        out = []
         for s in state_vec:
             if torch.bernoulli(torch.Tensor([epsilon])):
-                out.append(torch.randint(0,env.Na,(1,))[0])
+                out = np.random.randint(0,env.Na)
             else:
-                out.append(int(p(rep_cl([state_vec[0]]),rep_cl([state_vec[1]])).detach().item()))
-        return out[0] 
-    for j in range(start,n_epochs+1):
+                out = int(p(rep_cl([state_vec[0]]),rep_cl([state_vec[1]])).detach().item())
+        return out 
+    for j in range(start,n_episodes+1):
         #step 1
         env.reset()
         s_tab = [env.cat, env.mouse]
         print(f"episode {j}")
         n = 0
-        while s_tab[0]!=s_tab[1] and n!=150:
+        list_recompense = {"mouse":[],"cat":[]}
+        while s_tab[0]!=s_tab[1] and n!=250:
             a_tab = []
             for k in range(2):
                 a_tab.append(epsilon_greedy_policy(s_tab,p_tab[k]))
@@ -79,6 +75,8 @@ def A2C(buffer,
             buffer.store({"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]})
             s_tab = s_tab_prim
             n+=1
+            list_recompense["cat"].append(reward_tab[0]*gamma**n)
+            list_recompense["mouse"].append(reward_tab[1]*gamma**n)
             if j<10:
                 continue
             epsilon = max(.1,epsilon*.98)
@@ -92,7 +90,6 @@ def A2C(buffer,
                                                                      rep_ac(a_prim_tab[0]),
                                                                      rep_ac(a_prim_tab[1])).detach().squeeze())
                 #update critic
-                loss = []
                 loss_ = updateQ(optimizer_tab[l],
                                 Q,
                                 rep_cl(sample["state"][:,0]),
@@ -100,8 +97,6 @@ def A2C(buffer,
                                 rep_ac(sample["action"][:,0]),
                                 rep_ac(sample["action"][:,1]),
                                 targets)   
-                loss.append(loss_)
-                NegativPseudoLoss = []
 
                 api0, logits_ap0 = p_tab[0](rep_cl(sample["state"][:,0]),rep_cl(sample["state"][:,1]), logit = True)
                 api1, logits_ap1 = p_tab[1](rep_cl(sample["state"][:,0]),rep_cl(sample["state"][:,1]), logit = True)
@@ -118,18 +113,13 @@ def A2C(buffer,
                                 [rep_cl(sample["state"][:,0]),
                                 rep_cl(sample["state"][:,1])],
                                 rep_ac)
-                NegativPseudoLoss.append(nploss)
-            #listLossQ0.append(loss[0].item())
-            #listLossQ1.append(loss[1].item())
-
-        if j%100==0:
-            print("epochs", j,f"/{n_epochs}")
-            print("NegativPseudoLoss0",torch.mean(torch.Tensor(listLosspi0)))
-            print("NegativPseudoLoss1",torch.mean(torch.Tensor(listLosspi1)))
-            print("Loss Q0", torch.mean(torch.Tensor(listLossQ0)))
-            print("Loss Q1", torch.mean(torch.Tensor(listLossQ1)))
-        #    if len(retour_episodes)>0:
-        #        print("retour dernier episode", retour_episodes[-1])
+        if n>0:
+            retour_episodes["mouse"].append(sum(list_recompense["mouse"]))
+            retour_episodes["cat"].append(sum(list_recompense["cat"]))
+        if j%100==0 and j>0:
+            print("episodes", j,f"/{n_episodes}")
+            print("return_episodes mouse last five episodes",np.mean(retour_episodes["mouse"][-5:]))
+            print("return_episodes cat last five episodes",np.mean(retour_episodes["cat"][-5:]))
         if j%20==0 and j>0:
             torch.save(p_tab[0].state_dict(), os.path.join(loadpath,f"pi_0_load_{j}.pt"))
             torch.save(p_tab[1].state_dict(), os.path.join(loadpath,f"pi_1_load_{j}.pt"))
@@ -140,51 +130,12 @@ def A2C(buffer,
             torch.save(optimizer_tab[0].state_dict(), os.path.join(loadopt,f"opt_0_q_load_{j}.pt"))
             torch.save(optimizer_tab[1].state_dict(), os.path.join(loadopt,f"opt_1_q_load_{j}.pt"))
 
-        #if j%100==0 and j>100:
-        #    list_retour, iterations = testfunc(p,env, epsilon)
-        #    retour_episodes.append(list_retour[0])
-        #    print("plot")
-        #    plt.figure()
-        #    plt.semilogy(retour_episodes, label="retour episode pour l'etat initial")
-        #    plt.legend()
-        #    plt.savefig("recompense")
-        #    plt.close()
+        if j%100==0 and j>100:
+            plt.figure()
+            plt.semilogy(retour_episodes["cat"], label="return cat episode for initial state")
+            plt.semilogy(retour_episodes["mouse"], label="retour mouse episode for initial state")
+            plt.legend()
+            plt.savefig("plot/recompense")
+            plt.close()
+    return 0
 
-        #    plt.figure()
-        #    plt.semilogy(listLosspi, label="negativ pseudo loss")
-        #    plt.legend()
-        #    plt.savefig("negatigpseudoloss")
-        #    plt.close()
-
-        #    plt.figure()
-        #    plt.plot(listLossQ, label="Q loss")
-        #    plt.legend()
-        #    plt.savefig("Qloss")
-        #    plt.close()
-    return listLosspi0,listLosspi1,listLossQ0, listLossQ1
-
-
-
-def testfunc(p, env, epsilon, plot = False, gamma = .9):
-    i = 0
-    s = torch.randint(0,env.Na,(1,)).item()
-    rewardlist = []
-    list_recompense =[]
-    while True:
-        if torch.bernoulli(torch.Tensor([epsilon])):
-            a = torch.randint(0,env.Na,(1,)) 
-        else:
-            a  = p([s])
-        sp,R = env.transition(a,s)
-        s = sp
-        rewardlist.append(R)
-        if plot:
-            env.grid(s)
-            print("")
-        list_recompense.append(R*gamma**i)
-        if s==env.G:
-            break
-        i+=1
-    list_retour = [sum(list_recompense[i:]) for i in range(len(list_recompense))]
-    print(f"{i} iterations")
-    return list_retour, i

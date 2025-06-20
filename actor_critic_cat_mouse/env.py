@@ -9,7 +9,7 @@ class grid:
     Envirnonement grille sur laquelle se deplace l'agent jusqu'à atteindre le point G
     """
     def __init__(self,Nx,Ny,gamma = .9,S = 3,C= 12,epsilon=0.05):
-        self.actions = [(0,0),(0,1), (0, -1), (1, 0), (-1, 0),(1,1),(1,-1),(-1,-1),(-1,1)]
+        self.actions = [(0,1), (0, -1), (1, 0), (-1, 0),(1,1),(1,-1),(-1,-1),(-1,1)]
         self.table_fromage = torch.zeros((Nx,Ny)) 
         self.fromage = torch.randn((3,2))
         for f in self.fromage:
@@ -48,7 +48,7 @@ class grid:
         reward = (self.cat!=self.mouse) *(-1.0)
         return reward
     def reward_mouse(self):
-        reward = (self.cat==self.mouse)*(-1.0)
+        reward = (self.cat!=self.mouse)*(1.0)
         #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
         #    reward+=5
         #self.table_fromage[s_out[0],s_out[1]]=0
