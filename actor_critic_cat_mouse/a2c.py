@@ -9,7 +9,13 @@ from env import grid
 from Qfunc import Q
 from policy import policy
 
-def updatePi(Q:Q,optimizerpi,api0,api1,logpi, s_tab:list,rep_ac:Representation_action):
+def updatePi(Q:Q,
+             optimizerpi,
+             api0:int,
+             api1:int,
+             logpi,
+             s_tab:list,
+             rep_ac:Representation_action):
     optimizerpi.zero_grad()
     advantage = Q(s_tab[0],s_tab[1],rep_ac(api0),rep_ac(api1)).squeeze().detach()
     advantage = advantage.detach()
@@ -40,7 +46,12 @@ def A2C(buffer,
     listLosspi1 = []
     listLossQ1 = []
     retour_episodes = []
-    def updateQ(optimizerQ, Qvalue,states0, states1,actions0, actions1, targets):  
+    def updateQ(optimizerQ,
+                Qvalue,states0,
+                states1,
+                actions0, 
+                actions1, 
+                targets):  
         optimizerQ.zero_grad()
         loss = F.mse_loss(Qvalue(states0,states1,actions0,actions1).squeeze(),targets.squeeze())
         loss.backward()
@@ -79,7 +90,7 @@ def A2C(buffer,
                 targets =  sample["reward"][:,l] + torch.mul(gamma,Q(rep_cl(sample["new_state"][:,0]),
                                                                      rep_cl(sample["new_state"][:,1]),
                                                                      rep_ac(a_prim_tab[0]),
-                                                                     rep_ac(a_prim_tab[1])).squeeze())
+                                                                     rep_ac(a_prim_tab[1])).detach().squeeze())
                 #update critic
                 loss = []
                 loss_ = updateQ(optimizer_tab[l],
