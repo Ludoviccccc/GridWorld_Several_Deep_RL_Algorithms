@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 from a2c import A2C
 from rep import Representation, Representation_action
 def test(q_tab:list[Q], pi_tab,R, env,buffer):
-    #s_tab = [torch.randint(0,env.Nx*env.Ny,(1,)) for j in range(2)]
     s_tab = [env.cat, env.mouse]
     j =0
     T = env.grid()
@@ -35,18 +34,18 @@ def test(q_tab:list[Q], pi_tab,R, env,buffer):
 if __name__=="__main__":
     train = False
     testmode = True
-    start = 2000
-    epsilon = .2
-    gamma = .97
-    nx = 5
+    take_load = False
+    start = 180
+    epsilon = .1
+    gamma = .95
+    nx = 10
     ny = 5
-    lr = 1e-3
+    lr = 1e-4
     N = 10
-    batch_size = 32
-    n_epochs = 5001
+    batch_size = 16
+    n_epochs = 201
     loadpath = "loads"
     loadopt = "opt"
-    take_load = False
     env = grid(nx,ny, gamma =gamma)
     buffer = Buffer()
     q_tab = [Q(nx,ny,env.Na) for j in range(2)]
@@ -55,14 +54,12 @@ if __name__=="__main__":
     optimizerPi_tab = [optim.Adam(pi_tab[j].parameters(),lr=lr) for j in range(2)]
     R = Representation(env.Nx, env.Ny)
     R_a = Representation_action(env.Na)
+    if start>0:
+        q_tab[0].load_state_dict(torch.load(os.path.join(loadpath,f"q_0_load_{start}.pt"),weights_only=True))
+        q_tab[1].load_state_dict(torch.load(os.path.join(loadpath,f"q_1_load_{start}.pt"),weights_only=True))
+        pi_tab[0].load_state_dict(torch.load(os.path.join(loadpath,f"pi_0_load_{start}.pt"),weights_only=True))
+        pi_tab[1].load_state_dict(torch.load(os.path.join(loadpath,f"pi_1_load_{start}.pt"),weights_only=True))
     if testmode:
-        if take_load:
-            q_tab[0].load_state_dict(torch.load(os.path.join(loadpath,f"q_0_load_{start}.pt"),weights_only=False))
-            q_tab[1].load_state_dict(torch.load(os.path.join(loadpath,f"q_1_load_{start}.pt"),weights_only=False))
-            pi_tab[0].load_state_dict(torch.load(os.path.join(loadpath,f"pi_0_load_{start}.pt"),weights_only=False))
-            pi_tab[1].load_state_dict(torch.load(os.path.join(loadpath,f"pi_1_load_{start}.pt"),weights_only=False))
-            #q_tab[0].load_state_dict(torch.load(os.path.join(loadopt,f"opt_0_q_load_{start}.pt")))
-            #q_tab[1].load_state_dict(torch.load(os.path.join(loadopt,f"opt_1_q_load_{start}.pt")))
         test(q_tab, pi_tab,R, env,buffer)
     if train:
-        tup = A2C(buffer, R,R_a,q_tab,optimizerQ_tab,pi_tab,optimizerPi_tab,env,N,batch_size,n_epochs,loadpath, loadopt,K=1)
+        tup = A2C(buffer, R,R_a,q_tab,optimizerQ_tab,pi_tab,optimizerPi_tab,env,N,batch_size,n_epochs,loadpath, loadopt,K=5)

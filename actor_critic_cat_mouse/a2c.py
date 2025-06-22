@@ -19,7 +19,7 @@ def updatePi(Q:Q,
     optimizerpi.zero_grad()
     advantage = Q(s_tab[0],s_tab[1],rep_ac(api0),rep_ac(api1)).squeeze().detach()
     advantage = advantage.detach()
-    NegativPseudoLoss = torch.mean(torch.mul(logpi,advantage)) 
+    NegativPseudoLoss = torch.mean(torch.mul(logpi.squeeze(),advantage)) 
     NegativPseudoLoss.backward()
     optimizerpi.step()
     return NegativPseudoLoss
@@ -90,14 +90,14 @@ def A2C(buffer,
                                                                      rep_ac(a_prim_tab[0]),
                                                                      rep_ac(a_prim_tab[1])).detach().squeeze())
                 #update critic
-                loss_ = updateQ(optimizer_tab[l],
-                                Q,
-                                rep_cl(sample["state"][:,0]),
-                                rep_cl(sample["state"][:,1]),
-                                rep_ac(sample["action"][:,0]),
-                                rep_ac(sample["action"][:,1]),
-                                targets)   
-
+                for k in range(K):
+                    loss_ = updateQ(optimizer_tab[l],
+                                    Q,
+                                    rep_cl(sample["state"][:,0]),
+                                    rep_cl(sample["state"][:,1]),
+                                    rep_ac(sample["action"][:,0]),
+                                    rep_ac(sample["action"][:,1]),
+                                    targets)   
                 api0, logits_ap0 = p_tab[0](rep_cl(sample["state"][:,0]),rep_cl(sample["state"][:,1]), logit = True)
                 api1, logits_ap1 = p_tab[1](rep_cl(sample["state"][:,0]),rep_cl(sample["state"][:,1]), logit = True)
                 if l==0:
@@ -132,8 +132,8 @@ def A2C(buffer,
 
         if j%100==0 and j>100:
             plt.figure()
-            plt.semilogy(retour_episodes["cat"], label="return cat episode for initial state")
-            plt.semilogy(retour_episodes["mouse"], label="retour mouse episode for initial state")
+            plt.plot(retour_episodes["cat"], label="return cat episode for initial state")
+            plt.plot(retour_episodes["mouse"], label="retour mouse episode for initial state")
             plt.legend()
             plt.savefig("plot/recompense")
             plt.close()

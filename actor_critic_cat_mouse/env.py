@@ -18,7 +18,6 @@ class grid:
         self.Na = len(self.actions)
         self.Nx = Nx
         self.Ny = Ny
-        self.R = -1
         self.gamma = gamma
         self.states_encod = torch.eye(self.Nx*self.Ny).unsqueeze(0)
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
@@ -29,6 +28,8 @@ class grid:
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
     def transition(self,a_tab:list):
         assert len(a_tab)==2, "wrong len"
+        self.cat_previous = self.cat
+        self.mouse_previous = self.mouse
         self.cat = self.transition_single_agent(self.cat,a_tab[0]) 
         self.mouse = self.transition_single_agent(self.mouse,a_tab[1]) 
         reward = [self.reward_cat(), self.reward_mouse()]
@@ -45,10 +46,11 @@ class grid:
             s_out = s
         return s_out
     def reward_cat(self):
-        reward = (self.cat!=self.mouse) *(-1.0)
+        
+        reward = (self.cat!=self.mouse) *(-10.0) + (-2.0)*(self.cat ==self.cat_previous)
         return reward
     def reward_mouse(self):
-        reward = (self.cat!=self.mouse)*(1.0)
+        reward = (-10)*(self.cat==self.mouse)+(self.cat!=self.mouse)*(10.0)+ (-2.0)*(self.mouse==self.mouse_previous)
         #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
         #    reward+=5
         #self.table_fromage[s_out[0],s_out[1]]=0
