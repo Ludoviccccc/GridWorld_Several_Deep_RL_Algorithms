@@ -36,16 +36,16 @@ if __name__=="__main__":
     train = True
     testmode = True
     take_load = False
-    start = 600
+    start = 180
     epsilon = 1.0
-    gamma = .97
+    gamma = .99
     nx = 10
     ny = 5
-    lr = 1e-4
+    lr = 1e-3
     N = 10
-    batch_size = 16
+    batch_size = 32
     K = 5
-    n_epochs = 601
+    n_epochs = 700
     loadpath = "loads"
     loadopt = "opt"
     env = grid(nx,ny, gamma =gamma)

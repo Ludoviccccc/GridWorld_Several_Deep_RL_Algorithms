@@ -43,17 +43,19 @@ def A2C(buffer,
         p_tab:list[policy],
         optimizerpi_tab,
         env:grid,
-        N,
-        batch_size,
-        n_episodes,
-        loadpath,
-        loadopt,
+        N:int,
+        batch_size:int,
+        n_episodes:int,
+        loadpath:str,
+        loadopt:str,
         freqsave=100, 
         epsilon = 0.1,
-        K = 5,
-        start = 0, 
-        gamma =.95):
+        K:int = 5,
+        start:int = 0, 
+        gamma:int =.99):
     retour_episodes = {"cat":[],"mouse":[]}
+    loss_pi = {"cat":[],"mouse":[]}
+    loss_Q = {"cat":[],"mouse":[]}
     def epsilon_greedy_policy(state_vec,p):
         if np.random.binomial(1,epsilon):
             out = np.random.randint(0,env.Na)
@@ -67,7 +69,7 @@ def A2C(buffer,
         print(f"episode {j}")
         n = 0
         list_recompense = {"mouse":[],"cat":[]}
-        while s_tab[0]!=s_tab[1]  and n<=30:
+        while s_tab[0]!=s_tab[1]  and n<=50:
             a_tab = []
             for k in range(2):
                 a_tab.append(epsilon_greedy_policy(s_tab,p_tab[k]))
@@ -79,7 +81,7 @@ def A2C(buffer,
             list_recompense["mouse"].append(reward_tab[1]*gamma**n)
             if j<10:
                 continue
-            epsilon = max(.1,epsilon*.995)
+            epsilon = max(.1,epsilon*.999)
             for l,Q in enumerate(Q_tab):
                 sample = buffer.sample(min(batch_size,len(buffer.memory_state)))
                 a_prim_tab = []
@@ -92,7 +94,7 @@ def A2C(buffer,
                 #update critic
                 for k in range(K):
                     loss_ = updateQ(optimizer_tab[l],
-                                    Q,
+                                    Q_tab[l],
                                     rep_cl(sample["state"][:,0]),
                                     rep_cl(sample["state"][:,1]),
                                     rep_ac(sample["action"][:,0]),
@@ -110,16 +112,15 @@ def A2C(buffer,
                                 api0,
                                 api1,
                                 logpi,
-                                [rep_cl(sample["state"][:,0]),
-                                rep_cl(sample["state"][:,1])],
+                                [rep_cl(sample["state"][:,0]),rep_cl(sample["state"][:,1])],
                                 rep_ac)
-                #for p in p_tab[l].parameters():
-                #    print(p.grad)
+        #loss_pi["cat"].append(logpi)
         if n>0:
             retour_episodes["mouse"].append(sum(list_recompense["mouse"]))
             retour_episodes["cat"].append(sum(list_recompense["cat"]))
-        if j%100==0 and j>0:
+        if j%20==0 and j>0:
             print("episodes", j,f"/{n_episodes}")
+            print("epsilon", epsilon)
             print("return_episodes mouse last five episodes",np.mean(retour_episodes["mouse"][-5:]))
             print("return_episodes cat last five episodes",np.mean(retour_episodes["cat"][-5:]))
         if j%20==0 and j>0:
