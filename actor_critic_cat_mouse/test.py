@@ -22,6 +22,7 @@ def test(q_tab:list[Q], pi_tab,R, env,buffer):
         for k in range(2):
             rep0 = R.states_encod[s_tab[0]]
             rep1 = R.states_encod[s_tab[1]]
+            
             a_tab.append(pi_tab[k](rep0,rep1))
         s_tab_prim,reward_tab = env.transition(a_tab)
         buffer.store({"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]})
@@ -32,18 +33,19 @@ def test(q_tab:list[Q], pi_tab,R, env,buffer):
         plt.savefig(f"image/frame{j}")
     exit()
 if __name__=="__main__":
-    train = False
+    train = True
     testmode = True
     take_load = False
-    start = 180
-    epsilon = .1
-    gamma = .95
+    start = 600
+    epsilon = 1.0
+    gamma = .97
     nx = 10
     ny = 5
     lr = 1e-4
     N = 10
     batch_size = 16
-    n_epochs = 201
+    K = 5
+    n_epochs = 601
     loadpath = "loads"
     loadopt = "opt"
     env = grid(nx,ny, gamma =gamma)
@@ -62,4 +64,4 @@ if __name__=="__main__":
     if testmode:
         test(q_tab, pi_tab,R, env,buffer)
     if train:
-        tup = A2C(buffer, R,R_a,q_tab,optimizerQ_tab,pi_tab,optimizerPi_tab,env,N,batch_size,n_epochs,loadpath, loadopt,K=5)
+        tup = A2C(buffer, R,R_a,q_tab,optimizerQ_tab,pi_tab,optimizerPi_tab,env,N,batch_size,n_epochs,loadpath, loadopt,K=K, gamma=gamma, epsilon = epsilon)

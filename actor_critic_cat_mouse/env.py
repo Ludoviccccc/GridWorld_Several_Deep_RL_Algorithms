@@ -47,13 +47,19 @@ class grid:
         return s_out
     def reward_cat(self):
         
-        reward = (self.cat!=self.mouse) *(-10.0) + (-2.0)*(self.cat ==self.cat_previous)
+        s_cat = (self.cat//self.Ny, self.cat%self.Ny)
+        s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
+        reward = (self.cat!=self.mouse) *(-10.0) + (-2.0)*(self.cat ==self.cat_previous) 
         return reward
     def reward_mouse(self):
-        reward = (-10)*(self.cat==self.mouse)+(self.cat!=self.mouse)*(10.0)+ (-2.0)*(self.mouse==self.mouse_previous)
+        s_cat = (self.cat//self.Ny, self.cat%self.Ny)
+        s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
+        reward = (-10)*(self.cat==self.mouse)+(self.cat!=self.mouse)*(10.0)+ (-2.0)*(self.mouse==self.mouse_previous) 
+
         #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
         #    reward+=5
         #self.table_fromage[s_out[0],s_out[1]]=0
+
         return reward
     def transition_mouse(self,a,s,s_cat):
         assert(0<=s<self.Nx*self.Ny)

@@ -13,16 +13,17 @@ class policy(nn.Module):
         self.linear3 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
     def forward(self, s0,s1, logit =False):
-        out = self.linear1(torch.cat((s0,s1), dim=1))
+        x = torch.cat((s0,s1), dim=1)
+#        print("x", x.shape)
+        out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)
         out = self.actv(out)
-        out = self.linear3(out)
 
-        logits = F.sigmoid(out)
-        #print(logits)
-        #print("logits",logits.shape)
-        #print(F.softmax(logits,dim=1).sum(dim=1))
+        #out = self.linear3(out)
+        logits = self.linear3(out)
+
+        #logits = F.sigmoid(out)
         dist = distributions.Categorical(F.softmax(logits,dim=1))  
         #exit()
         action  = dist.sample([1]).squeeze()

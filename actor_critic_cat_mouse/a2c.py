@@ -23,12 +23,24 @@ def updatePi(Q:Q,
     NegativPseudoLoss.backward()
     optimizerpi.step()
     return NegativPseudoLoss
+def updateQ(optimizerQ,
+            Qvalue,
+            states0,
+            states1,
+            actions0, 
+            actions1, 
+            targets):  
+    optimizerQ.zero_grad()
+    loss = F.mse_loss(Qvalue(states0,states1,actions0,actions1).squeeze(),targets.squeeze())
+    loss.backward()
+    optimizerQ.step()
+    return loss
 def A2C(buffer,
         rep_cl:Representation,
         rep_ac:Representation_action,
         Q_tab:list[Q],
         optimizer_tab:list,
-        p_tab,
+        p_tab:list[policy],
         optimizerpi_tab,
         env:grid,
         N,
@@ -38,27 +50,15 @@ def A2C(buffer,
         loadopt,
         freqsave=100, 
         epsilon = 0.1,
-        K = 1,
+        K = 5,
         start = 0, 
-        gamma =.9):
+        gamma =.95):
     retour_episodes = {"cat":[],"mouse":[]}
-    def updateQ(optimizerQ,
-                Qvalue,states0,
-                states1,
-                actions0, 
-                actions1, 
-                targets):  
-        optimizerQ.zero_grad()
-        loss = F.mse_loss(Qvalue(states0,states1,actions0,actions1).squeeze(),targets.squeeze())
-        loss.backward()
-        optimizerQ.step()
-        return loss
     def epsilon_greedy_policy(state_vec,p):
-        for s in state_vec:
-            if torch.bernoulli(torch.Tensor([epsilon])):
-                out = np.random.randint(0,env.Na)
-            else:
-                out = int(p(rep_cl([state_vec[0]]),rep_cl([state_vec[1]])).detach().item())
+        if np.random.binomial(1,epsilon):
+            out = np.random.randint(0,env.Na)
+        else:
+            out = int(p(rep_cl([state_vec[0]]),rep_cl([state_vec[1]])).detach().item())
         return out 
     for j in range(start,n_episodes+1):
         #step 1
@@ -67,7 +67,7 @@ def A2C(buffer,
         print(f"episode {j}")
         n = 0
         list_recompense = {"mouse":[],"cat":[]}
-        while s_tab[0]!=s_tab[1] and n!=250:
+        while s_tab[0]!=s_tab[1]  and n<=30:
             a_tab = []
             for k in range(2):
                 a_tab.append(epsilon_greedy_policy(s_tab,p_tab[k]))
@@ -79,16 +79,16 @@ def A2C(buffer,
             list_recompense["mouse"].append(reward_tab[1]*gamma**n)
             if j<10:
                 continue
-            epsilon = max(.1,epsilon*.98)
+            epsilon = max(.1,epsilon*.995)
             for l,Q in enumerate(Q_tab):
                 sample = buffer.sample(min(batch_size,len(buffer.memory_state)))
                 a_prim_tab = []
                 for m in range(2):
                     a_prim_tab.append(p_tab[m](rep_cl(sample["new_state"][:,0]),rep_cl(sample["new_state"][:,1])))
-                targets =  sample["reward"][:,l] + torch.mul(gamma,Q(rep_cl(sample["new_state"][:,0]),
+                targets =  sample["reward"][:,l] + gamma * Q(rep_cl(sample["new_state"][:,0]),
                                                                      rep_cl(sample["new_state"][:,1]),
                                                                      rep_ac(a_prim_tab[0]),
-                                                                     rep_ac(a_prim_tab[1])).detach().squeeze())
+                                                                     rep_ac(a_prim_tab[1])).detach().squeeze()
                 #update critic
                 for k in range(K):
                     loss_ = updateQ(optimizer_tab[l],
@@ -113,6 +113,8 @@ def A2C(buffer,
                                 [rep_cl(sample["state"][:,0]),
                                 rep_cl(sample["state"][:,1])],
                                 rep_ac)
+                #for p in p_tab[l].parameters():
+                #    print(p.grad)
         if n>0:
             retour_episodes["mouse"].append(sum(list_recompense["mouse"]))
             retour_episodes["cat"].append(sum(list_recompense["cat"]))
