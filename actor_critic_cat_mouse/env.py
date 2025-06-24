@@ -59,7 +59,8 @@ class grid:
         s_cat = (self.cat//self.Ny, self.cat%self.Ny)
         s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
         cheese_reached = (s_mouse[0] ==self.target_mouse[0])*(s_mouse[1]==self.target_mouse[1])
-        reward = (-500)*(self.cat==self.mouse)+(-100.0)*(self.mouse==self.mouse_previous) + 200*cheese_reached 
+        #reward = (-500)*(self.cat==self.mouse)+(-100.0)*(self.mouse==self.mouse_previous) + 200*cheese_reached 
+        reward = 200*cheese_reached 
 
         #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
         #    reward+=5

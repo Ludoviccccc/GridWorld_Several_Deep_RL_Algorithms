@@ -22,3 +22,25 @@ class Q(nn.Module):
         out = self.actv(out)
         out = self.linear5(out)
         return out
+class Q2(nn.Module):
+    def __init__(self,Nx,Ny,Na):
+        super(Q2,self).__init__()
+        self.Nx = Nx
+        self.Ny = Ny
+        self.Na = Na
+        self.linear1 = nn.Linear(self.Ny*self.Nx + Na,64)
+        self.linear3 = nn.Linear(64,64)
+        self.linear4 = nn.Linear(64,32)
+        self.linear5 = nn.Linear(32,1)
+        #self.actv = nn.Tanh()
+        self.actv = nn.Sigmoid()
+    def forward(self, s0,s1,a0,a1):
+        x = torch.cat((s1,a1),dim=1)
+        out = self.linear1(x)
+        out = self.actv(out)
+        out = self.linear3(out)
+        out = self.actv(out)
+        out = self.linear4(out)
+        out = self.actv(out)
+        out = self.linear5(out)
+        return out

@@ -2,8 +2,8 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-from policy import policy
-from Qfunc import Q
+from policy import policy, policy2
+from Qfunc import Q,Q2
 from buffer import Buffer
 from env import grid
 import os
@@ -37,8 +37,8 @@ def test(q_tab:list[Q], pi_tab,R, env,buffer):
     exit()
 if __name__=="__main__":
     train = True
-    testmode = True
-    start = 500
+    testmode = False
+    start = 0
     epsilon = 1.0
     gamma = .99
     nx = 6
@@ -54,8 +54,8 @@ if __name__=="__main__":
     buffer = Buffer()
     Q_cat = Q(nx,ny,env.Na)
     p_cat = policy(nx,ny,env.Na)
-    Q_mouse = Q(nx,ny,env.Na)
-    p_mouse = policy(nx,ny,env.Na)
+    Q_mouse = Q2(nx,ny,env.Na)
+    p_mouse = policy2(nx,ny,env.Na)
     q_tab = [Q_cat,Q_mouse]
     pi_tab = [p_cat,p_mouse]
     optimizerQ_tab = [optim.Adam(Q_cat.parameters(), lr = lr), optim.Adam(Q_mouse.parameters(), lr = lr)]

@@ -27,6 +27,7 @@ class grid:
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
     def transition(self,a,s):
         assert(0<=s<self.Nx*self.Ny)
+        #self.previous = s
         d = self.actions[a]
         s_couple = (s//self.Ny, s%self.Ny)
         sp = (s_couple[0]+ d[0], s_couple[1]+d[1])
@@ -35,7 +36,7 @@ class grid:
         if condition:
             assert(0<=sp[0]*self.Ny+sp[1]<self.Nx*self.Ny)
             s = s_temp
-            R = torch.Tensor([(s==self.G)*1.0])
+            R = torch.Tensor([(s==self.G)*100.0])
         else:
             R=torch.Tensor([-1])# la recompense est -1 si l'agent essai de sortir de la grille
         return s,R
@@ -64,18 +65,6 @@ class grid:
         return x
     def representation_action(self,a):
         return torch.Tensor([self.actions[int(i)][0] for i in a]), torch.Tensor([self.actions[int(i)][1] for i in a])
-    def transitionvec(self,a,s):
-        "a un est un iterable de valeurs scalaires"
-        "s un est un iterable de valeurs scalaires"
-        couples = {0:s//self.Ny,1:s%self.Ny}
-        mouv0,mouv1 = self.representation_action(a)
-        InGrid =(couples[0]+mouv0>=0)*(couples[0]+mouv0<self.Nx)*(couples[1]+mouv1>=0)*(couples[1]+mouv1<self.Ny)
-        couples2 = {0:(couples[0]+mouv0*InGrid),1:(couples[1]+mouv1*InGrid)}
-        newstate = couples2[0]*self.Ny+couples2[1]
-        reward = (newstate==self.G) + (InGrid==False)*(-1)
-        #a l'interieur 1 dans InGrid et 0 dans InGrid*(-1)+1 --> 0
-        #a l'exterieur 0 dans InGrid et 1 dans InGrid*(-1)+1 --> -1
-        return newstate,reward
     def representation(self,state):
        return  pad_sequence([self.states_encod[0,:,int(i)] for i in state]).permute(1,0)
     def representationaction(self,action):
