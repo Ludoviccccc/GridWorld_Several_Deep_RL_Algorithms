@@ -23,6 +23,7 @@ class grid:
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
+        self.target_mouse = (3,2)
     def reset(self):
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
@@ -33,7 +34,10 @@ class grid:
         self.cat = self.transition_single_agent(self.cat,a_tab[0]) 
         self.mouse = self.transition_single_agent(self.mouse,a_tab[1]) 
         reward = [self.reward_cat(), self.reward_mouse()]
-        return [self.cat, self.mouse],reward 
+        s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
+        cheese_reached = (s_mouse[0] ==self.target_mouse[0])*(s_mouse[1]==self.target_mouse[1])
+        terminated = self.cat==self.mouse or cheese_reached
+        return [self.cat, self.mouse],reward, terminated
     def transition_single_agent(self,s,a):
         assert(0<=s<self.Nx*self.Ny)
         d = self.actions[a]
@@ -54,30 +58,21 @@ class grid:
     def reward_mouse(self):
         s_cat = (self.cat//self.Ny, self.cat%self.Ny)
         s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
-        reward = (-500)*(self.cat==self.mouse)+(-100.0)*(self.mouse==self.mouse_previous) 
+        cheese_reached = (s_mouse[0] ==self.target_mouse[0])*(s_mouse[1]==self.target_mouse[1])
+        reward = (-500)*(self.cat==self.mouse)+(-100.0)*(self.mouse==self.mouse_previous) + 200*cheese_reached 
 
         #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
         #    reward+=5
         #self.table_fromage[s_out[0],s_out[1]]=0
 
         return reward
-    def transition_mouse(self,a,s,s_cat):
-        assert(0<=s<self.Nx*self.Ny)
-        d = self.actions[a]
-        s_couple = (s//self.Ny, s%self.Ny)
-        if self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0:
-            sp = (s_couple[0]+ d[0], s_couple[1]+d[1])
-            assert(0<=sp[0]*self.Ny+sp[1]<self.Nx*self.Ny)
-            s_out = sp[0]*self.Ny+sp[1]
-        else:
-            s_out = s
-        return s_out
     def grid(self):
         s_mouse = self.mouse
         s_cat = self.cat
         T = np.zeros((self.Nx,self.Ny))
         T[s_mouse//self.Ny, s_mouse%self.Ny] = 1
         T[s_cat//self.Ny, s_cat%self.Ny] = -1
+        T[self.target_mouse[0],self.target_mouse[1]] = 5
         print(T)
         return T
     def tensor_state(self,s):

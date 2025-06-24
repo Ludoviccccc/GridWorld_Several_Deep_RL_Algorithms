@@ -15,7 +15,7 @@ class Buffer:
         assert(type(N)==int and N>0 and N<=len(self.memory_state))
         selection = torch.randint(0,len(self.memory_state),(N,))
         state = torch.stack([torch.Tensor(self.memory_state[j]) for j in selection])    
-        action = torch.stack([torch.Tensor(self.memory_action[j]) for j in selection])                                                           
+        action = torch.stack([torch.Tensor(self.memory_action[j]) for j in selection])
         newstate = torch.stack([torch.Tensor(self.memory_newstate[j]) for j in selection])
         reward = torch.Tensor([self.memory_reward[j] for j in selection])
         #renvoie un tuple de 4 tenseurs (s,a,s',r)

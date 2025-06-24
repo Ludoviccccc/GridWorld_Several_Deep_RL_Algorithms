@@ -10,16 +10,13 @@ class policy(nn.Module):
         self.Na = Na
         self.linear1 = nn.Linear(2*self.Ny*self.Nx,64)
         self.linear2 = nn.Linear(64,64)
-        self.linear3 = nn.Linear(64,64)
         self.linear4 = nn.Linear(64,self.Na)
-        self.actv = nn.Tanh()
+        self.actv = nn.Sigmoid()
     def forward(self, s0,s1, logit =False):
         x = torch.cat((s0,s1), dim=1)
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)
-        out = self.actv(out)
-        out = self.linear3(out)
         out = self.actv(out)
         logits = self.linear4(out)
         dist = distributions.Categorical(F.softmax(logits,dim=1))  
