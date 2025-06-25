@@ -4,13 +4,12 @@ import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
 from policy import policy, policy2
 from Qfunc import Q,Q2
-from buffer import Buffer
 from env import grid
 import os
-#from qlearning import qlearn, test
 import matplotlib.pyplot as plt
-from a2c import A2C
+from a22c import A2C
 from rep import Representation, Representation_action
+from agent import Cat, Mouse
 def test(q_tab:list[Q], pi_tab,R, env,buffer):
     s_tab = [env.cat, env.mouse]
     j =0
@@ -41,33 +40,24 @@ if __name__=="__main__":
     start = 0
     epsilon = 1.0
     gamma = .99
-    nx = 6
+    nx = 5
     ny = 5
-    lr = 1e-4
-    N = 10
-    batch_size = 8
+    lr_pi = 1e-4
+    lr_q = 1e-4
+    batch_size = 128
     K = 5
-    n_epochs = 500
+    n_epochs = 3500
     loadpath = "loads"
     loadopt = "opt"
     env = grid(nx,ny, gamma =gamma)
-    buffer = Buffer()
-    Q_cat = Q(nx,ny,env.Na)
-    p_cat = policy(nx,ny,env.Na)
-    Q_mouse = Q2(nx,ny,env.Na)
-    p_mouse = policy2(nx,ny,env.Na)
-    q_tab = [Q_cat,Q_mouse]
-    pi_tab = [p_cat,p_mouse]
-    optimizerQ_tab = [optim.Adam(Q_cat.parameters(), lr = lr), optim.Adam(Q_mouse.parameters(), lr = lr)]
-    optimizerPi_tab = [optim.Adam(p_cat.parameters(),lr=lr),optim.Adam(p_mouse.parameters(),lr=lr)]
-    R = Representation(env.Nx, env.Ny)
-    R_a = Representation_action(env.Na)
+
+    mouse = Mouse(env,lr_pi,lr_q,epsilon)
+    cat = Cat(env,lr_pi,lr_q,epsilon)
     if start>0:
-        q_tab[0].load_state_dict(torch.load(os.path.join(loadpath,f"q_0_load_{start}.pt"),weights_only=True))
-        q_tab[1].load_state_dict(torch.load(os.path.join(loadpath,f"q_1_load_{start}.pt"),weights_only=True))
-        pi_tab[0].load_state_dict(torch.load(os.path.join(loadpath,f"pi_0_load_{start}.pt"),weights_only=True))
-        pi_tab[1].load_state_dict(torch.load(os.path.join(loadpath,f"pi_1_load_{start}.pt"),weights_only=True))
+        mouse.load(start)
+        cat.load(start)
     if testmode:
         test(q_tab, pi_tab,R, env,buffer)
     if train:
-        tup = A2C(buffer, R,R_a,q_tab,optimizerQ_tab,pi_tab,optimizerPi_tab,env,N,batch_size,n_epochs,loadpath, loadopt,K=K, gamma=gamma, epsilon = epsilon)
+        print("train")
+        tup = A2C(env,mouse,cat,batch_size,n_epochs, epsilon = epsilon, gamma=gamma)

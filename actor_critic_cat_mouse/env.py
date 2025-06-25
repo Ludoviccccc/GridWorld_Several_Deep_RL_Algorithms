@@ -24,21 +24,30 @@ class grid:
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.target_mouse = (3,2)
+        self.target_idx = self.Ny*self.target_mouse[0] + self.target_mouse[1]
     def reset(self):
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
-    def transition(self,a_tab:list):
-        assert len(a_tab)==2, "wrong len"
+    def transition_cat(self,a:int):
         self.cat_previous = self.cat
+        self.cat = self.transition_single_agent(self.cat,a) 
+        reward = self.reward_cat()
+        terminated = self.terminated()
+        return self.cat,reward
+    def transition_mouse(self,a:int):
         self.mouse_previous = self.mouse
-        self.cat = self.transition_single_agent(self.cat,a_tab[0]) 
-        self.mouse = self.transition_single_agent(self.mouse,a_tab[1]) 
-        reward = [self.reward_cat(), self.reward_mouse()]
+        self.mouse = self.transition_single_agent(self.mouse,a) 
+        reward = self.reward_mouse()
+        terminated = self.terminated()
+        return self.mouse,reward
+    def terminated(self):
+        "says if the episode is teminated"
         s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
         cheese_reached = (s_mouse[0] ==self.target_mouse[0])*(s_mouse[1]==self.target_mouse[1])
-        terminated = self.cat==self.mouse or cheese_reached
-        return [self.cat, self.mouse],reward, terminated
+        terminated = cheese_reached
+        return terminated
     def transition_single_agent(self,s,a):
+        assert(0<=a<=self.Na)
         assert(0<=s<self.Nx*self.Ny)
         d = self.actions[a]
         s_couple = (s//self.Ny, s%self.Ny)
@@ -53,14 +62,14 @@ class grid:
         
         s_cat = (self.cat//self.Ny, self.cat%self.Ny)
         s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
-        reward = (self.cat==self.mouse) *(500.0) + (-100.0)*(self.cat ==self.cat_previous) 
+        reward = (self.cat==self.mouse) *(100.0) + (-10.0)*(self.cat ==self.cat_previous) 
         return reward
     def reward_mouse(self):
         s_cat = (self.cat//self.Ny, self.cat%self.Ny)
         s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
-        cheese_reached = (s_mouse[0] ==self.target_mouse[0])*(s_mouse[1]==self.target_mouse[1])
+        not_cheese_reached = (s_mouse[0] !=self.target_mouse[0])*(s_mouse[1]==self.target_mouse[1])
         #reward = (-500)*(self.cat==self.mouse)+(-100.0)*(self.mouse==self.mouse_previous) + 200*cheese_reached 
-        reward = 200*cheese_reached 
+        reward = (-1.0)*not_cheese_reached + (-1.0)*(self.mouse==self.mouse_previous)
 
         #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
         #    reward+=5
