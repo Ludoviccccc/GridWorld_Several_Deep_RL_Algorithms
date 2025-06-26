@@ -8,24 +8,24 @@ class grid:
     """
     Envirnonement grille sur laquelle se deplace l'agent jusqu'à atteindre le point G
     """
-    def __init__(self,Nx,Ny,gamma = .9,S = 3,C= 12,epsilon=0.05):
+    def __init__(self,Nx,Ny,max_steps = 100):
         self.actions = [(0,1), (0, -1), (1, 0), (-1, 0),(1,1),(1,-1),(-1,-1),(-1,1)]
         self.table_fromage = torch.zeros((Nx,Ny)) 
         self.fromage = torch.randn((3,2))
         for f in self.fromage:
             self.table_fromage[int(f[0]),int(f[1])] = 1
-        self.epsilon = epsilon
         self.Na = len(self.actions)
         self.Nx = Nx
         self.Ny = Ny
-        self.gamma = gamma
         self.states_encod = torch.eye(self.Nx*self.Ny).unsqueeze(0)
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.target_idx = 10
         self.target_mouse = (self.target_idx//self.Ny,self.target_idx%self.Ny)
+        self.max_steps = max_steps
     def reset(self):
+        self.count = 0
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
     def transition_cat(self,a:int):
@@ -39,6 +39,7 @@ class grid:
         self.mouse = self.transition_single_agent(self.mouse,a) 
         reward = self.reward_mouse()
         terminated = self.terminated()
+        self.count+=1
         return self.mouse,reward
     def terminated(self):
         "says if the episode is teminated"
@@ -46,6 +47,8 @@ class grid:
         cheese_reached = (s_mouse[0] ==self.target_mouse[0])*(s_mouse[1]==self.target_mouse[1])
         terminated = cheese_reached
         return terminated
+    def truncated(self):
+        return self.count>self.max_steps
     def transition_single_agent(self,s,a):
         assert(0<=a<=self.Na)
         assert(0<=s<self.Nx*self.Ny)
@@ -64,7 +67,7 @@ class grid:
         reward = (self.cat==self.mouse) *(100.0) + (-10.0)*(self.cat ==self.cat_previous) 
         return reward
     def reward_mouse(self):
-        reward = (100.0)*(self.target_idx==self.mouse) + (-1.0)*(self.mouse==self.mouse_previous)
+        reward = (100.0)*(self.target_idx==self.mouse) + (-10.0)*(self.mouse==self.mouse_previous)
         return reward
     def grid(self):
         s_mouse = self.mouse

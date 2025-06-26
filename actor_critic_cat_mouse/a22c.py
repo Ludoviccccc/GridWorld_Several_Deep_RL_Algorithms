@@ -15,9 +15,10 @@ def A2C(env:grid,
         n_episodes:int,
         freqsave=100, 
         epsilon = 0.1,
-        K:int = 5,
+        K:int = 1,
         start:int = 0, 
-        gamma:int =.99):
+        gamma:int =.99,
+        fact = .99):
     retour_episodes = {"cat":[],"mouse":[]}
     loss_pi = {"cat":[],"mouse":[]}
     loss_Q = {"cat":[],"mouse":[]}
@@ -34,7 +35,7 @@ def A2C(env:grid,
         n = 0
         return_cat = torch.Tensor([0])
         return_mouse = torch.Tensor([0])
-        while not env.terminated():
+        while not env.terminated() and not env.truncated():
             a_tab = {"cat":cat.act([s_tab["cat"],s_tab["mouse"]]), "mouse":mouse.act(s_tab["mouse"])}
             #s_cat,reward_cat = env.transition_cat(a_tab["cat"])
             s_mouse,reward_mouse = env.transition_mouse(a_tab["mouse"])
@@ -57,11 +58,11 @@ def A2C(env:grid,
                 #a_prim_tab["cat"] = cat.p(rep_cl(sample["new_state"]["cat"]),rep_cl(sample["new_state"]["cat"]))
                 a_prim_tab["mouse"] = mouse.p(rep_cl(sample["new_state"]["mouse"]))
                 if isinstance(agent,Mouse):
-                    targets =  sample["reward"] + gamma * agent.q(
+                    targets =  sample["reward"] + gamma * agent.q_target(
                                                           rep_cl(sample["new_state"]["mouse"]),
                                                           rep_ac(a_prim_tab["mouse"])).detach().squeeze()
                 else:
-                    targets =  sample["reward"] + gamma * agent.q(rep_cl(sample["new_state"]["cat"]),
+                    targets =  sample["reward"] + gamma * agent.q_target(rep_cl(sample["new_state"]["cat"]),
                                                              rep_cl(sample["new_state"]["mouse"]),
                                                              rep_ac(a_prim_tab["cat"]),
                                                              rep_ac(a_prim_tab["mouse"])).detach().squeeze()
@@ -108,12 +109,17 @@ def A2C(env:grid,
                                     [rep_cl(sample["state"]["cat"]),rep_cl(sample["state"]["mouse"])])
                 loss_pi[label].append(nploss.item())
                 loss_Q[label].append(loss_.item())
+        mouse.update_target_net()
+        #cat.update_target_net()
+        mouse.epsilon=max(0.05,mouse.epsilon*fact)
+        #cat.epsilon=max(0.05,cat.epsilon*fact)
         if n>0:
             retour_episodes["mouse"].append(return_mouse.item())
             retour_episodes["cat"].append(return_cat.item())
         if j%20==0 and j>0:
             print("episodes", j,f"/{n_episodes}")
-            print("epsilon", epsilon)
+            print("epsilon mouse", mouse.epsilon)
+            print("epsilon cat", cat.epsilon)
             print("return_episodes mouse last five episodes",np.mean(retour_episodes["mouse"][-5:]))
             print("return_episodes cat last five episodes",np.mean(retour_episodes["cat"][-5:]))
         if j%20==0 and j>0:

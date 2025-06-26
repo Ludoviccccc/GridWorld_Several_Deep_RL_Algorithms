@@ -1,6 +1,6 @@
 import torch
 class Buffer:
-    def __init__(self,maxsize=1000):
+    def __init__(self,maxsize=150):
         self.memory_state = {"cat":[],"mouse":[]}
         self.memory_action = {"cat":[],"mouse":[]}
         self.memory_newstate = {"cat":[],"mouse":[]}
@@ -16,6 +16,9 @@ class Buffer:
         self.memory_reward.append(pair["reward"])
         self.eviction()
     def sample(self,N):
+        """
+        returns dictionnary of state, action, new_state and reward
+        """
         assert(type(N)==int and N>0 and N<=len(self.memory_state))
         selection = torch.randint(0,len(self.memory_state["mouse"]),(N,))
         state = {"cat":torch.Tensor([self.memory_state["cat"][j] for j in selection]),
@@ -25,7 +28,6 @@ class Buffer:
         new_state = {"cat":torch.Tensor([self.memory_newstate["cat"][j] for j in selection]),
                 "mouse":torch.Tensor([self.memory_newstate["mouse"][j] for j in selection])}
         reward = torch.Tensor([self.memory_reward[j] for j in selection])
-        #renvoie un tuple de 4 tenseurs (s,a,s',r)
         return {"state":state, "action":action, "new_state":new_state,"reward": reward}
 
 

@@ -10,55 +10,59 @@ import matplotlib.pyplot as plt
 from a22c import A2C
 from rep import Representation, Representation_action
 from agent import Cat, Mouse
-def test(mouse):
+def test(mouse:Mouse,env:grid):
     mouse.epsilon = 0
-    s_tab = [env.cat, env.mouse]
     j =0
     T = env.grid()
+    plt.figure()
     plt.imshow(T)
     plt.savefig(f"image/frame{j}")
-    terminated = env.cat==env.mouse
-    print("terminated", terminated)
-    while not terminated:
-        a_tab = []
-        for k in range(2):
-            rep0 = R.states_encod[s_tab[0]]
-            rep1 = R.states_encod[s_tab[1]]
-            
-            a_tab.append(pi_tab[k](rep0,rep1))
-        print("a_tab", a_tab)
-        s_tab_prim,reward_tab, terminated = env.transition(a_tab)
-        buffer.store({"state":[s_tab],"action":[a_tab],"new_state":[s_tab_prim],"reward":[reward_tab]})
+    plt.close()
+    while env.terminated():
+        env.reset()
+    n = 0
+    while not env.terminated():
+        s_mouse,_ = env.transition_mouse(mouse.act(env.mouse))
         T = env.grid()
-        s_tab = s_tab_prim
-        j+=1
+        plt.figure()
         plt.imshow(T)
         plt.savefig(f"image/frame{j}")
+        plt.close()
     exit()
+
 if __name__=="__main__":
     train = True
     testmode = False
-    start = 0
-    epsilon = 0.1
+    start = 3500
+    epsilon = 1.0
     gamma = .99
     nx = 5
     ny = 5
-    lr_pi = 1e-4
+    # large learning rates implies more risk to local minima
+    lr_pi = 1e-4 
     lr_q = 1e-4
     batch_size = 128
-    K = 5
+    buffer_size = 100000
+    # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
+    K = 3
     n_epochs = 3500
     loadpath = "loads"
     loadopt = "opt"
-    env = grid(nx,ny, gamma =gamma)
+    max_steps = 100
+    fact = .999
 
-    mouse = Mouse(env,lr_pi,lr_q,epsilon)
+
+
+
+    env = grid(nx,ny,max_steps = max_steps)
+
+    mouse = Mouse(env,lr_pi,lr_q,epsilon,buffer_size = buffer_size)
     cat = Cat(env,lr_pi,lr_q,epsilon)
     if start>0:
         mouse.load(start)
         cat.load(start)
     if testmode:
-        test(q_tab, pi_tab,R, env,buffer)
+            test(mouse,env)
     if train:
         print("train")
-        tup = A2C(env,mouse,cat,batch_size,n_epochs, epsilon = epsilon, gamma=gamma)
+        tup = A2C(env,mouse,cat,batch_size,n_epochs, epsilon = epsilon, gamma=gamma,K=K,fact = fact)
