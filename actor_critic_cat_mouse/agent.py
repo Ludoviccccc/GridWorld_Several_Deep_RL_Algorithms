@@ -56,7 +56,7 @@ class Mouse:
         if np.random.binomial(1,self.epsilon):
             out = np.random.randint(0,self.Na)
         else:
-            out = int(self.p(self.rep_cl([state_vec[1]])).detach().item())
+            out = int(self.p(self.rep_cl(state)).detach().item())
         return out 
     def act(self,state:int):
         return self.epsilon_greedy_policy(state)

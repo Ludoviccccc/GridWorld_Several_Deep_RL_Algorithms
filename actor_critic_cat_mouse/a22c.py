@@ -36,29 +36,32 @@ def A2C(env:grid,
         return_mouse = torch.Tensor([0])
         while not env.terminated():
             a_tab = {"cat":cat.act([s_tab["cat"],s_tab["mouse"]]), "mouse":mouse.act(s_tab["mouse"])}
-            s_cat,reward_cat = env.transition_cat(a_tab["cat"])
+            #s_cat,reward_cat = env.transition_cat(a_tab["cat"])
             s_mouse,reward_mouse = env.transition_mouse(a_tab["mouse"])
-            s_tab_prim = {"cat":s_cat,"mouse":s_mouse}
-            cat.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_cat})
+            #s_tab_prim = {"cat":s_cat,"mouse":s_mouse}
+            s_tab_prim = {"cat":0,"mouse":s_mouse}
+            #cat.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_cat})
             mouse.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_mouse})
             s_tab = s_tab_prim
             n+=1
-            return_cat += reward_cat*gamma**n
+            #return_cat += reward_cat*gamma**n
             return_mouse += reward_mouse*gamma**n
             if j<1:
                 continue
-            epsilon = max(.1,epsilon*.999)
+            #epsilon = max(.01,epsilon*.99)
             for label,agent in [("mouse",mouse)]:
                 sample = agent.buffer.sample(min(batch_size,len(agent.buffer.memory_state)))
+                #print("memory",agent.buffer.memory_state)
+                #print("sample", sample["state"])
                 a_prim_tab = {"cat":[],"mouse":[]}
-                a_prim_tab["cat"] = cat.p(rep_cl(sample["new_state"]["cat"]),rep_cl(sample["new_state"]["cat"]))
+                #a_prim_tab["cat"] = cat.p(rep_cl(sample["new_state"]["cat"]),rep_cl(sample["new_state"]["cat"]))
                 a_prim_tab["mouse"] = mouse.p(rep_cl(sample["new_state"]["mouse"]))
                 if isinstance(agent,Mouse):
-                    targets =  sample["reward"][:] + gamma * agent.q(
-                                                             rep_cl(sample["new_state"]["mouse"]),
-                                                             rep_ac(a_prim_tab["mouse"])).detach().squeeze()
+                    targets =  sample["reward"] + gamma * agent.q(
+                                                          rep_cl(sample["new_state"]["mouse"]),
+                                                          rep_ac(a_prim_tab["mouse"])).detach().squeeze()
                 else:
-                    targets =  sample["reward"][:] + gamma * agent.q(rep_cl(sample["new_state"]["cat"]),
+                    targets =  sample["reward"] + gamma * agent.q(rep_cl(sample["new_state"]["cat"]),
                                                              rep_cl(sample["new_state"]["mouse"]),
                                                              rep_ac(a_prim_tab["cat"]),
                                                              rep_ac(a_prim_tab["mouse"])).detach().squeeze()
@@ -76,7 +79,7 @@ def A2C(env:grid,
                                         rep_ac(sample["action"]["cat"]),
                                         rep_ac(sample["action"]["mouse"]),
                                         targets)   
-                api0, logits_ap0 = cat.p(rep_cl(sample["state"]["cat"]),rep_cl(sample["state"]["mouse"]), logit = True)
+                #api0, logits_ap0 = cat.p(rep_cl(sample["state"]["cat"]),rep_cl(sample["state"]["mouse"]), logit = True)
                 api1, logits_ap1 = mouse.p(rep_cl(sample["state"]["mouse"]), logit = True)
                 if label=="cat":
 

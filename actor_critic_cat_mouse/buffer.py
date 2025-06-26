@@ -17,7 +17,7 @@ class Buffer:
         self.eviction()
     def sample(self,N):
         assert(type(N)==int and N>0 and N<=len(self.memory_state))
-        selection = torch.randint(0,len(self.memory_state),(N,))
+        selection = torch.randint(0,len(self.memory_state["mouse"]),(N,))
         state = {"cat":torch.Tensor([self.memory_state["cat"][j] for j in selection]),
                 "mouse":torch.Tensor([self.memory_state["mouse"][j] for j in selection])}
         action = {"cat":torch.Tensor([self.memory_action["cat"][j] for j in selection]),

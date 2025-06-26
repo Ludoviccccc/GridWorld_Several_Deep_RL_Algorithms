@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 from a22c import A2C
 from rep import Representation, Representation_action
 from agent import Cat, Mouse
-def test(q_tab:list[Q], pi_tab,R, env,buffer):
+def test(mouse):
+    mouse.epsilon = 0
     s_tab = [env.cat, env.mouse]
     j =0
     T = env.grid()
@@ -38,7 +39,7 @@ if __name__=="__main__":
     train = True
     testmode = False
     start = 0
-    epsilon = 1.0
+    epsilon = 0.1
     gamma = .99
     nx = 5
     ny = 5

@@ -23,8 +23,8 @@ class grid:
         self.actions_encod = torch.eye(self.Na).unsqueeze(0)
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
-        self.target_mouse = (3,2)
-        self.target_idx = self.Ny*self.target_mouse[0] + self.target_mouse[1]
+        self.target_idx = 10
+        self.target_mouse = (self.target_idx//self.Ny,self.target_idx%self.Ny)
     def reset(self):
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
@@ -59,22 +59,12 @@ class grid:
             s_out = s
         return s_out
     def reward_cat(self):
-        
         s_cat = (self.cat//self.Ny, self.cat%self.Ny)
         s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
         reward = (self.cat==self.mouse) *(100.0) + (-10.0)*(self.cat ==self.cat_previous) 
         return reward
     def reward_mouse(self):
-        s_cat = (self.cat//self.Ny, self.cat%self.Ny)
-        s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
-        not_cheese_reached = (s_mouse[0] !=self.target_mouse[0])*(s_mouse[1]==self.target_mouse[1])
-        #reward = (-500)*(self.cat==self.mouse)+(-100.0)*(self.mouse==self.mouse_previous) + 200*cheese_reached 
-        reward = (-1.0)*not_cheese_reached + (-1.0)*(self.mouse==self.mouse_previous)
-
-        #if s_out in self.fromage and self.table_fromage[s_out[0],s_out[1]]>0:
-        #    reward+=5
-        #self.table_fromage[s_out[0],s_out[1]]=0
-
+        reward = (100.0)*(self.target_idx==self.mouse) + (-1.0)*(self.mouse==self.mouse_previous)
         return reward
     def grid(self):
         s_mouse = self.mouse
