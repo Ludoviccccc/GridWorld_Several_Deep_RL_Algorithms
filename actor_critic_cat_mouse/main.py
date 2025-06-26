@@ -41,7 +41,7 @@ if __name__=="__main__":
     # large learning rates implies more risk to local minima
     lr_pi = 1e-4 
     lr_q = 1e-4
-    batch_size = 128
+    batch_size = 256
     buffer_size = 100000
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
     K = 3
