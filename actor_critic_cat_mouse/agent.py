@@ -81,7 +81,8 @@ class Cat:
                 epsilon:float=.1,
                 tau:float=0.01,
                 loadpath:str = "loads",
-                optpath:str ="opt"
+                optpath:str ="opt",
+                buffer_size:int=10000
                 ):
         self.p = policy(env.Nx,env.Ny,env.Na)
         self.q = Q(env.Nx,env.Ny,env.Na)

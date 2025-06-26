@@ -33,31 +33,32 @@ def test(mouse:Mouse,env:grid):
 if __name__=="__main__":
     train = True
     testmode = False
-    start = 3500
+    start = 0
     epsilon = 1.0
     gamma = .99
     nx = 5
     ny = 5
     # large learning rates implies more risk to local minima
-    lr_pi = 1e-4 
+    lr_pi = 1e-4
     lr_q = 1e-4
-    batch_size = 256
-    buffer_size = 100000
+    batch_size = 8
+    buffer_size = 16
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
-    K = 3
+    K = 1
     n_epochs = 3500
     loadpath = "loads"
     loadopt = "opt"
-    max_steps = 100
+    max_steps = 60
     fact = .999
+    tau = .01
 
 
 
 
     env = grid(nx,ny,max_steps = max_steps)
 
-    mouse = Mouse(env,lr_pi,lr_q,epsilon,buffer_size = buffer_size)
-    cat = Cat(env,lr_pi,lr_q,epsilon)
+    mouse = Mouse(env,lr_pi,lr_q,epsilon,buffer_size = buffer_size, tau=tau)
+    cat = Cat(env,lr_pi,lr_q,epsilon, buffer_size=buffer_size, tau=tau)
     if start>0:
         mouse.load(start)
         cat.load(start)

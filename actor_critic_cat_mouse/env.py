@@ -26,6 +26,7 @@ class grid:
         self.max_steps = max_steps
     def reset(self):
         self.count = 0
+        self.catch = 0
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
     def transition_cat(self,a:int):
@@ -45,8 +46,8 @@ class grid:
         "says if the episode is teminated"
         s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
         cheese_reached = (s_mouse[0] ==self.target_mouse[0])*(s_mouse[1]==self.target_mouse[1])
-        terminated = cheese_reached
-        return terminated
+        terminated = cheese_reached or self.catch==10
+        return terminated  
     def truncated(self):
         return self.count>self.max_steps
     def transition_single_agent(self,s,a):
@@ -62,9 +63,8 @@ class grid:
             s_out = s
         return s_out
     def reward_cat(self):
-        s_cat = (self.cat//self.Ny, self.cat%self.Ny)
-        s_mouse = (self.mouse//self.Ny, self.mouse%self.Ny)
-        reward = (self.cat==self.mouse) *(100.0) + (-10.0)*(self.cat ==self.cat_previous) 
+        self.catch+=1*(self.cat==self.mouse)
+        reward = (10.0)*(self.cat==self.mouse)  + (-1.0)*(self.cat ==self.cat_previous) 
         return reward
     def reward_mouse(self):
         reward = (100.0)*(self.target_idx==self.mouse) + (-10.0)*(self.mouse==self.mouse_previous)

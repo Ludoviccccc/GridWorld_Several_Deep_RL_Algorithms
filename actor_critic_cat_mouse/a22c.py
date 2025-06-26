@@ -37,25 +37,23 @@ def A2C(env:grid,
         return_mouse = torch.Tensor([0])
         while not env.terminated() and not env.truncated():
             a_tab = {"cat":cat.act([s_tab["cat"],s_tab["mouse"]]), "mouse":mouse.act(s_tab["mouse"])}
-            #s_cat,reward_cat = env.transition_cat(a_tab["cat"])
+            s_cat,reward_cat = env.transition_cat(a_tab["cat"])
             s_mouse,reward_mouse = env.transition_mouse(a_tab["mouse"])
-            #s_tab_prim = {"cat":s_cat,"mouse":s_mouse}
-            s_tab_prim = {"cat":0,"mouse":s_mouse}
-            #cat.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_cat})
+            s_tab_prim = {"cat":s_cat,"mouse":s_mouse}
+            cat.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_cat})
             mouse.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_mouse})
             s_tab = s_tab_prim
             n+=1
-            #return_cat += reward_cat*gamma**n
+            return_cat += reward_cat*gamma**n
             return_mouse += reward_mouse*gamma**n
             if j<1:
                 continue
-            #epsilon = max(.01,epsilon*.99)
-            for label,agent in [("mouse",mouse)]:
+            for label,agent in [("mouse",mouse),("cat",cat)]:
                 sample = agent.buffer.sample(min(batch_size,len(agent.buffer.memory_state)))
                 #print("memory",agent.buffer.memory_state)
                 #print("sample", sample["state"])
                 a_prim_tab = {"cat":[],"mouse":[]}
-                #a_prim_tab["cat"] = cat.p(rep_cl(sample["new_state"]["cat"]),rep_cl(sample["new_state"]["cat"]))
+                a_prim_tab["cat"] = cat.p(rep_cl(sample["new_state"]["cat"]),rep_cl(sample["new_state"]["cat"]))
                 a_prim_tab["mouse"] = mouse.p(rep_cl(sample["new_state"]["mouse"]))
                 if isinstance(agent,Mouse):
                     targets =  sample["reward"] + gamma * agent.q_target(
@@ -80,12 +78,11 @@ def A2C(env:grid,
                                         rep_ac(sample["action"]["cat"]),
                                         rep_ac(sample["action"]["mouse"]),
                                         targets)   
-                #api0, logits_ap0 = cat.p(rep_cl(sample["state"]["cat"]),rep_cl(sample["state"]["mouse"]), logit = True)
+                api0, logits_ap0 = cat.p(rep_cl(sample["state"]["cat"]),rep_cl(sample["state"]["mouse"]), logit = True)
                 api1, logits_ap1 = mouse.p(rep_cl(sample["state"]["mouse"]), logit = True)
                 if label=="cat":
 
                     logpi = F.cross_entropy(logits_ap0,rep_ac(api0),weight = None, reduction = 'none')
-                    #print("api0",rep_ac(api0))
                     #print("logits_ap0",logits_ap0)
                     #print(logpi)
                     #print(torch.sum(torch.mul(torch.log(F.softmax(logits_ap0,dim=1)),rep_ac(api0)),dim=1))
@@ -110,9 +107,9 @@ def A2C(env:grid,
                 loss_pi[label].append(nploss.item())
                 loss_Q[label].append(loss_.item())
         mouse.update_target_net()
-        #cat.update_target_net()
+        cat.update_target_net()
         mouse.epsilon=max(0.05,mouse.epsilon*fact)
-        #cat.epsilon=max(0.05,cat.epsilon*fact)
+        cat.epsilon=max(0.05,cat.epsilon*fact)
         if n>0:
             retour_episodes["mouse"].append(return_mouse.item())
             retour_episodes["cat"].append(return_cat.item())

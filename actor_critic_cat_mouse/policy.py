@@ -8,8 +8,9 @@ class policy(nn.Module):
         self.Nx = Nx
         self.Ny = Ny
         self.Na = Na
-        self.linear1 = nn.Linear(2*self.Ny*self.Nx,32)
-        self.linear2 = nn.Linear(32,16)
+        self.linear1 = nn.Linear(2*self.Ny*self.Nx,64)
+        self.linear2 = nn.Linear(64,32)
+        self.linear3 = nn.Linear(32,16)
         self.linear4 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
     def forward(self, s0,s1, logit =False):
@@ -17,6 +18,8 @@ class policy(nn.Module):
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)
+        out = self.actv(out)
+        out = self.linear3(out)
         out = self.actv(out)
         logits = self.linear4(out)
         dist = distributions.Categorical(F.softmax(logits,dim=1))  
@@ -43,7 +46,6 @@ class policy2(nn.Module):
         out = self.linear2(out)
         out = self.actv(out)
         logits = self.linear4(out)
-        #print("logits", logits)
         dist = distributions.Categorical(F.softmax(logits,dim=1))  
         action  = dist.sample([1]).squeeze()
         if logit:
