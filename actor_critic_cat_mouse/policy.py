@@ -35,8 +35,8 @@ class policy2(nn.Module):
         self.Nx = Nx
         self.Ny = Ny
         self.Na = Na
-        self.linear1 = nn.Linear(self.Ny*self.Nx,32)
-        self.linear2 = nn.Linear(32,16)
+        self.linear1 = nn.Linear(2,8)
+        self.linear2 = nn.Linear(8,16)
         self.linear4 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
     def forward(self,s1, logit =False):

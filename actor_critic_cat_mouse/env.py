@@ -17,8 +17,6 @@ class grid:
         self.Na = len(self.actions)
         self.Nx = Nx
         self.Ny = Ny
-        self.states_encod = torch.eye(self.Nx*self.Ny).unsqueeze(0)
-        self.actions_encod = torch.eye(self.Na).unsqueeze(0)
         self.cat = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.mouse = torch.randint(0,self.Nx*self.Ny,(1,)) 
         self.target_idx = 10
@@ -62,6 +60,18 @@ class grid:
         else:
             s_out = s
         return s_out
+    def transition_single_agent2(self,s,a):
+        assert(0<=a<=self.Na)
+        assert(0<=s<self.Nx*self.Ny)
+        d = self.actions[a]
+        s_couple = (s//self.Ny, s%self.Ny)
+        if self.Nx>s_couple[0]+ d[0]>=0 and self.Ny>s_couple[1]+d[1]>=0:
+            sp = (s_couple[0]+ d[0], s_couple[1]+d[1])
+            assert(0<=sp[0]*self.Ny+sp[1]<self.Nx*self.Ny)
+            s_out = sp[0]*self.Ny+sp[1]
+        else:
+            s_out = s
+        return s_out
     def reward_cat(self):
         self.catch+=1*(self.cat==self.mouse)
         reward = (10.0)*(self.cat==self.mouse)  + (-1.0)*(self.cat ==self.cat_previous) 
@@ -78,18 +88,3 @@ class grid:
         T[self.target_mouse[0],self.target_mouse[1]] = 5
         print(T)
         return T
-    def tensor_state(self,s):
-        return self.states_encod[:,:,s]
-    def zero_one(self,state,J):
-        x = nn.functional.one_hot(state,J)
-        x = x.reshape((len(state),-1))
-        x = x.type(torch.float32)
-        return x
-    def representation_action(self,a):
-        return torch.Tensor([self.actions[i][0] for i in a]), torch.Tensor([self.actions[i][1] for i in a])
-    def representation(self,s,c):
-        out1 = (-1)*pad_sequence([self.states_encod[0,:,int(i)] for i in c]).permute(1,0)
-        out2 =      pad_sequence([self.states_encod[0,:,int(i)] for i in s]).permute(1,0)
-        return out1+out2
-    def representationaction(self,action):
-        return  pad_sequence([self.actions_encod[0,:,int(i)] for i in action]).permute(1,0)
