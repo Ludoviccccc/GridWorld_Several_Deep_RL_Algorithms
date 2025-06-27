@@ -3,18 +3,16 @@ from torch import distributions
 import torch.nn as nn
 import torch.nn.functional as F
 class policy(nn.Module):
-    def __init__(self, Nx,Ny, Na):
+    def __init__(self,env):
         super(policy,self).__init__()
-        self.Nx = Nx
-        self.Ny = Ny
-        self.Na = Na
-        self.linear1 = nn.Linear(2*self.Ny*self.Nx,64)
-        self.linear2 = nn.Linear(64,32)
-        self.linear3 = nn.Linear(32,16)
+        self.Nx = env.Nx
+        self.Ny = env.Ny
+        self.Na = env.Na
+        self.linear1 = nn.Linear(2,8)
+        self.linear2 = nn.Linear(8,16)
         self.linear4 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
-    def forward(self, s0,s1, logit =False):
-        x = torch.cat((s0,s1), dim=1)
+    def forward(self, x, logit =False):
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)
@@ -30,17 +28,17 @@ class policy(nn.Module):
             out = action
         return out
 class policy2(nn.Module):
-    def __init__(self, Nx,Ny, Na):
+    def __init__(self, env):
         super(policy2,self).__init__()
-        self.Nx = Nx
-        self.Ny = Ny
-        self.Na = Na
+        self.Nx = env.Nx
+        self.Ny = env.Ny
+        self.Na = env.Na
         self.linear1 = nn.Linear(2,8)
         self.linear2 = nn.Linear(8,16)
         self.linear4 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
     def forward(self,s1, logit =False):
-        x = s1
+        x = torch.Tensor(s1)
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)

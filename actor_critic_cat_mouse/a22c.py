@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from rep import Representation, Representation_action
-from env import grid
+from env2 import grid
 from agent import Mouse, Cat
 
 def A2C(env:grid,
@@ -28,7 +28,7 @@ def A2C(env:grid,
     for j in range(start,n_episodes+1):
         #step 1
         env.reset()
-        s_tab = {"cat":env.cat,"mouse": env.mouse}
+        s_tab = {"cat":env.cat_pos,"mouse": env.mouse_pos}
         while env.terminated():
             env.reset()
         print(f"episode {j}/{n_episodes}")
@@ -36,7 +36,7 @@ def A2C(env:grid,
         return_cat = torch.Tensor([0])
         return_mouse = torch.Tensor([0])
         while not env.terminated() and not env.truncated():
-            a_tab = {"cat":cat.act([s_tab["cat"],s_tab["mouse"]]), "mouse":mouse.act(s_tab["mouse"])}
+            a_tab = {"cat":cat([s_tab["cat"],s_tab["mouse"]]), "mouse":mouse(s_tab["mouse"])}
             s_cat,reward_cat = env.transition_cat(a_tab["cat"])
             s_mouse,reward_mouse = env.transition_mouse(a_tab["mouse"])
             s_tab_prim = {"cat":s_cat,"mouse":s_mouse}
@@ -46,6 +46,7 @@ def A2C(env:grid,
             n+=1
             return_cat += reward_cat*gamma**n
             return_mouse += reward_mouse*gamma**n
+            pass
             if j<1:
                 continue
             for label,agent in [("mouse",mouse),("cat",cat)]:
@@ -53,7 +54,8 @@ def A2C(env:grid,
                 #print("memory",agent.buffer.memory_state)
                 #print("sample", sample["state"])
                 a_prim_tab = {"cat":[],"mouse":[]}
-                a_prim_tab["cat"] = cat.p(rep_cl(sample["new_state"]["cat"]),rep_cl(sample["new_state"]["cat"]))
+                print(sample["new_state"]["cat"])
+                a_prim_tab["cat"] = cat.p(sample["new_state"]["cat"])
                 a_prim_tab["mouse"] = mouse.p(rep_cl(sample["new_state"]["mouse"]))
                 if isinstance(agent,Mouse):
                     targets =  sample["reward"] + gamma * agent.q_target(

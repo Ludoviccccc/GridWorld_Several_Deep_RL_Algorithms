@@ -20,7 +20,7 @@ def test(mouse:Mouse,env:grid):
     plt.savefig(f"image/frame{j}")
     plt.close()
     while env.terminated():
-        env.reset()
+        env.wset()
     n = 0
     while not env.terminated():
         s_mouse,_ = env.transition_mouse(mouse.act(env.mouse))
@@ -58,10 +58,14 @@ if __name__=="__main__":
 
     env = grid(nx,ny,max_steps = max_steps)
     env.reset()
-    mouse = Mouse(env)
+    mouse = Mouse(env,epsilon = 0.0)
+    cat = Cat(env,epsilon = 0.0)
     for j in range(100):
         state_mouse,_ = env.transition_mouse(np.random.randint(env.Na))
         state_cat,_ = env.transition_cat(np.random.randint(env.Na))
+        print(mouse(state_mouse))
+        print(cat(state_mouse))
         print(state_mouse, state_cat)
         print(env.mouse_pos,env.cat_pos)
-
+        print(mouse.Qf(state_mouse,2))
+        print(cat.Qf(state_cat,2))

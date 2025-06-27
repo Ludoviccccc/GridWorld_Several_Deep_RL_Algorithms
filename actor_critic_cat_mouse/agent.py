@@ -8,7 +8,19 @@ from env import grid
 import numpy as np
 import os
 from buffer import Buffer
-class Mouse:
+class Tool:
+    def __init__(self,env):
+        self.rep_ac = Representation_action(env.Na)
+        self.rep_cl = Representation(env.Nx,env.Ny)
+    def Qf(self,state:np.ndarray,action:list[int]):
+        return self.q(torch.Tensor(state).unsqueeze(0),self.rep_ac([action]))
+    def Qf_target(self,state:np.ndarray,action:int):
+        if state.ndim ==1:
+            return self.q_target(torch.Tensor(state).unsqueeze(0),self.rep_ac([action]))
+        else:
+            return self.q_target(torch.Tensor(state),self.rep_ac([action]))
+
+class Mouse(Tool):
     def __init__(self,
                 env:grid,
                 lr_pi:float=.3,
@@ -19,13 +31,12 @@ class Mouse:
                 optpath:str ="opt",
                 buffer_size:int=10000
                 ):
-        self.p = policy2(env.Nx,env.Ny,env.Na)
-        self.q = Q2(env.Nx,env.Ny,env.Na)
-        self.q_target = Q2(env.Nx,env.Ny,env.Na)
+        super(Mouse,self).__init__(env)
+        self.p = policy2(env)
+        self.q = Q2(env)
+        self.q_target = Q2(env)
         self.optimizerpi = optim.Adam(self.p.parameters(),lr=   lr_pi)
         self.optimizer_q = optim.Adam(self.q.parameters(), lr = lr_q)
-        self.rep_ac = Representation_action(env.Na)
-        self.rep_cl = Representation(env.Nx,env.Ny)
         self.epsilon = epsilon
         self.tau = tau
         self.Na = env.Na
@@ -69,11 +80,12 @@ class Mouse:
         if np.random.binomial(1,self.epsilon):
             out = np.random.randint(0,self.Na)
         else:
-            out = int(self.p(self.rep_cl(state)).detach().item())
+            out = int(self.p(state).detach().item())
         return out 
-    def act(self,state:int):
+    def __call__(self,state:np.ndarray):
+        state = torch.Tensor(state).unsqueeze(0)
         return self.epsilon_greedy_policy(state)
-class Cat:
+class Cat(Tool):
     def __init__(self,
                 env:grid,
                 lr_pi:float=.3,
@@ -84,9 +96,10 @@ class Cat:
                 optpath:str ="opt",
                 buffer_size:int=10000
                 ):
-        self.p = policy(env.Nx,env.Ny,env.Na)
-        self.q = Q(env.Nx,env.Ny,env.Na)
-        self.q_target = Q(env.Nx,env.Ny,env.Na)
+        super(Cat,self).__init__(env)
+        self.p = policy2(env)
+        self.q = Q2(env)
+        self.q_target = Q2(env)
         self.optimizerpi = optim.Adam(self.p.parameters(),lr=lr_pi)
         self.optimizer_q = optim.Adam(self.q.parameters(), lr = lr_q)
         self.rep_ac = Representation_action(env.Na)
@@ -131,11 +144,12 @@ class Cat:
         loss.backward()
         self.optimizer_q.step()
         return loss
-    def epsilon_greedy_policy(self,state_vec:list):
+    def epsilon_greedy_policy(self,state:np.ndarray):
         if np.random.binomial(1,self.epsilon):
             out = np.random.randint(0,self.Na)
         else:
-            out = int(self.p(self.rep_cl([state_vec[0]]),self.rep_cl([state_vec[1]])).detach().item())
+            out = int(self.p(state).detach().item())
         return out 
-    def act(self,state_vec:list):
-        return self.epsilon_greedy_policy(state_vec)
+    def __call__(self,state:np.ndarray):
+        state = torch.Tensor(state).unsqueeze(0)
+        return self.epsilon_greedy_policy(state)

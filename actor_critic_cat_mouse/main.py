@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
 from policy import policy, policy2
 from Qfunc import Q,Q2
-from env import grid
+from env2 import grid
 import os
 import matplotlib.pyplot as plt
 from a22c import A2C
