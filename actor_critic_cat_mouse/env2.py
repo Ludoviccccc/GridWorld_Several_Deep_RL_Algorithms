@@ -19,25 +19,30 @@ class grid:
         self.catch = 0
         self.cat_pos = (np.random.randint(0,self.Nx), np.random.randint(0,self.Ny))
         self.mouse_pos = (np.random.randint(0,self.Nx), np.random.randint(0,self.Ny))
+    def state_cat(self):
+        state_cat = np.array([self.mouse_pos[0] - self.cat_pos[0],self.mouse_pos[1] - self.cat_pos[1]])
+        if np.linalg.norm(state_cat)!=0:
+            state_cat = state_cat/np.linalg.norm(state_cat)
+        return state_cat
     def transition_cat(self,a:int):
         self.cat_previous = self.cat_pos
         self.cat_pos = self.transition_single_agent(self.cat_pos,a) 
         reward = self.reward_cat()
-        state_cat = np.array([self.mouse_pos[0] - self.cat_pos[0],self.mouse_pos[1] - self.cat_pos[1]])
-        if np.linalg.norm(state_cat)!=0:
-            state_cat = state_cat/np.linalg.norm(state_cat)
-        terminated = self.terminated()
+        state_cat = self.state_cat()
         self.catch+=1.0*(self.cat_pos==self.mouse_pos)
         return state_cat,reward
+    def state_mouse(self):
+        state_mouse = np.array([self.target_mouse[0] - self.mouse_pos[0],self.target_mouse[1] - self.mouse_pos[1]])
+        if np.linalg.norm(state_mouse)!=0:
+            state_mouse = state_mouse/np.linalg.norm(state_mouse)
+        return state_mouse
     def transition_mouse(self,a:int):
         self.mouse_previous = self.mouse_pos
         self.mouse_pos = self.transition_single_agent(self.mouse_pos,a) 
         reward = self.reward_mouse()
         terminated = self.terminated()
         self.count+=1
-        state_mouse = np.array([self.target_mouse[0] - self.mouse_pos[0],self.target_mouse[1] - self.mouse_pos[1]])
-        if np.linalg.norm(state_mouse)!=0:
-            state_mouse = state_mouse/np.linalg.norm(state_mouse)
+        state_mouse = self.state_mouse()
         return state_mouse,reward
     def terminated(self):
         "says if the episode is teminated"

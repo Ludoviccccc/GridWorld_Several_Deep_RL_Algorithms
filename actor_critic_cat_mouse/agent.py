@@ -13,12 +13,13 @@ class Tool:
         self.rep_ac = Representation_action(env.Na)
         self.rep_cl = Representation(env.Nx,env.Ny)
     def Qf(self,state:np.ndarray,action:list[int]):
-        return self.q(torch.Tensor(state).unsqueeze(0),self.rep_ac([action]))
+        return self.q(torch.Tensor(state).unsqueeze(0),self.rep_ac(action))
     def Qf_target(self,state:np.ndarray,action:int):
+        print('action', action)
         if state.ndim ==1:
             return self.q_target(torch.Tensor(state).unsqueeze(0),self.rep_ac([action]))
         else:
-            return self.q_target(torch.Tensor(state),self.rep_ac([action]))
+            return self.q_target(torch.Tensor(state),self.rep_ac(action))
 
 class Mouse(Tool):
     def __init__(self,
@@ -71,7 +72,7 @@ class Mouse(Tool):
                 actions1, 
                 targets):  
         self.optimizer_q.zero_grad()
-        loss = F.mse_loss(self.q(states1,actions1).squeeze(),targets.squeeze())
+        loss = F.mse_loss(self.Qf(states1,actions1).squeeze(),targets.squeeze())
         loss.backward()
         self.optimizer_q.step()
         return loss
@@ -148,7 +149,10 @@ class Cat(Tool):
         if np.random.binomial(1,self.epsilon):
             out = np.random.randint(0,self.Na)
         else:
-            out = int(self.p(state).detach().item())
+            print("state", state)
+            out = self.p(state)
+            print("out", out)
+            out = int(out.detach().item())
         return out 
     def __call__(self,state:np.ndarray):
         state = torch.Tensor(state).unsqueeze(0)

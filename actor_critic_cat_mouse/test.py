@@ -46,7 +46,7 @@ if __name__=="__main__":
     buffer_size = 16
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
     K = 1
-    n_epochs = 3500
+    n_epochs = 5
     loadpath = "loads"
     loadopt = "opt"
     max_steps = 60
@@ -60,12 +60,13 @@ if __name__=="__main__":
     env.reset()
     mouse = Mouse(env,epsilon = 0.0)
     cat = Cat(env,epsilon = 0.0)
-    for j in range(100):
+    for j in range(3):
         state_mouse,_ = env.transition_mouse(np.random.randint(env.Na))
         state_cat,_ = env.transition_cat(np.random.randint(env.Na))
         print(mouse(state_mouse))
         print(cat(state_mouse))
         print(state_mouse, state_cat)
         print(env.mouse_pos,env.cat_pos)
-        print(mouse.Qf(state_mouse,2))
-        print(cat.Qf(state_cat,2))
+        print(mouse.Qf(state_mouse,[2]))
+        print(cat.Qf(state_cat,[2]))
+    A2C(env,mouse,cat,batch_size,n_epochs)
