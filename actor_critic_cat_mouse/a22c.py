@@ -39,7 +39,7 @@ def A2C(env:grid,
             a_tab = {"cat":cat(s_tab["cat"]), "mouse":mouse(s_tab["mouse"])}
             s_cat,reward_cat = env.transition_cat(a_tab["cat"])
             s_mouse,reward_mouse = env.transition_mouse(a_tab["mouse"])
-            s_tab_prim = {"cat":s_cat,"mouse":s_mouse}
+            s_tab_prim = {"cat":env.state_cat(),"mouse": env.state_mouse()}
             #######"corriger
             cat.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_cat})
             mouse.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_mouse})
@@ -50,7 +50,8 @@ def A2C(env:grid,
             if j<1:
                 continue
             for label,agent in [("mouse",mouse),("cat",cat)]:
-                sample = agent.buffer.sample(min(batch_size,len(agent.buffer.memory_state)))
+                sample = agent.buffer.sample(min(batch_size,len(agent.buffer.memory_state["mouse"])))
+                print(sample)
                 a_prim_tab = {"cat":[],"mouse":[]}
                 a_prim_tab["cat"] = cat.p(sample["new_state"]["cat"])
                 a_prim_tab["mouse"] = mouse.p(sample["new_state"]["mouse"])
@@ -65,11 +66,10 @@ def A2C(env:grid,
                     if isinstance(agent,Mouse):
                         loss_ = agent.updateQ(sample["state"]["mouse"],sample["action"]["mouse"],targets)
                     else:
-                        loss_ = agent.updateQ(
-                                        sample["state"]["cat"],
-                                        sample["action"]["cat"],
-                                        sample["action"]["mouse"],
-                                        targets)   
+                        loss_ = agent.updateQ(sample["state"]["cat"],
+                                            sample["action"]["cat"],
+                                            sample["action"]["mouse"],
+                                            targets)   
                 api = {"cat":[],"mouse":[]}
                 logits = {"cat":[],"mouse":[]}
                 api["cat"],   logits["cat"] = cat.p(sample["state"]["cat"], logit = True)

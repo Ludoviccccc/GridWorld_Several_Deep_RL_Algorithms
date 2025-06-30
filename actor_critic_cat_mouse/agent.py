@@ -66,6 +66,7 @@ class Mouse(Tool):
         advantage = self.q(s,self.rep_ac(api)).squeeze().detach()
         advantage = advantage.detach()
         NegativPseudoLoss = torch.mean(torch.mul(logpi.squeeze(),advantage)) 
+        print("Neg", NegativPseudoLoss)
         NegativPseudoLoss.backward()
         self.optimizerpi.step()
         return NegativPseudoLoss

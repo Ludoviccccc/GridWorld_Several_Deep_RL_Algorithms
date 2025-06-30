@@ -34,12 +34,14 @@ class policy2(nn.Module):
         self.Nx = env.Nx
         self.Ny = env.Ny
         self.Na = env.Na
-        self.linear1 = nn.Linear(2,8)
-        self.linear2 = nn.Linear(8,16)
+        self.linear1 = nn.Linear(2,16)
+        self.linear2 = nn.Linear(16,16)
         self.linear4 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
+        self.actv2 = nn.Sigmoid()
     def forward(self,s1, logit =False):
         x = torch.mul(torch.Tensor(s1),1.0/self.Nx)
+        x = torch.Tensor(s1)
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)
@@ -47,6 +49,7 @@ class policy2(nn.Module):
         logits = self.linear4(out)
         dist = distributions.Categorical(F.softmax(logits,dim=1))  
         action  = dist.sample([1]).squeeze()
+        #print(F.softmax(logits,dim=1))
         if logit:
             out =  action, logits
         else:

@@ -20,7 +20,7 @@ class Buffer:
         """
         returns dictionnary of state, action, new_state and reward
         """
-        assert(type(N)==int and N>0 and N<=len(self.memory_state))
+        assert(type(N)==int and N>0 and N<=len(self.memory_state["cat"]))
         selection = torch.randint(0,len(self.memory_state["mouse"]),(N,))
         state = {"cat":torch.Tensor(np.array([self.memory_state["cat"][j] for j in selection])),
                 "mouse":torch.Tensor(np.array([self.memory_state["mouse"][j] for j in selection]))}

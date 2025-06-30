@@ -40,13 +40,13 @@ if __name__=="__main__":
     nx = 5
     ny = 5
     # large learning rates implies more risk to local minima
-    lr_pi = 1e-4
-    lr_q = 1e-4
+    lr_pi = 1e-6
+    lr_q = 1e-6
     batch_size = 128
     buffer_size = 2048
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
     K = 2
-    n_epochs = 400
+    n_epochs = 500
     loadpath = "loads"
     loadopt = "opt"
     max_steps = 60
@@ -58,6 +58,7 @@ if __name__=="__main__":
 
     env = grid(nx,ny,max_steps = max_steps)
     env.reset()
-    mouse = Mouse(env,epsilon = epsilon)
-    cat = Cat(env,epsilon = epsilon)
+    mouse = Mouse(env,epsilon = epsilon,buffer_size = buffer_size)
+    print("mouse", mouse)
+    cat = Cat(env,epsilon = epsilon, buffer_size = buffer_size)
     A2C(env,mouse,cat,batch_size,n_epochs)
