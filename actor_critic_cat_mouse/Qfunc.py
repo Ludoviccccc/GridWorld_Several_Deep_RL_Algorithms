@@ -23,8 +23,8 @@ class Q2(nn.Module):
     def __init__(self,env):
         super(Q2,self).__init__()
         self.Na = env.Na
-        self.linear1 = nn.Linear(2 + env.Na,16)
-        self.linear4 = nn.Linear(16,16)
+        self.linear1 = nn.Linear(2 + env.Na,32)
+        self.linear4 = nn.Linear(32,16)
         self.linear5 = nn.Linear(16,1)
         self.actv = nn.ReLU()
     def forward(self, s1,a1):

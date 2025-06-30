@@ -49,21 +49,14 @@ def A2C(env:grid,
             if j<1:
                 continue
             for label,agent in [("mouse",mouse),("cat",cat)]:
-                print("label", label)
                 sample = agent.buffer.sample(min(batch_size,len(agent.buffer.memory_state)))
-                #print("memory",agent.buffer.memory_state)
-                #print("sample", sample["state"])
                 a_prim_tab = {"cat":[],"mouse":[]}
-                print(sample["new_state"]["cat"])
                 a_prim_tab["cat"] = cat.p(sample["new_state"]["cat"])
                 a_prim_tab["mouse"] = mouse.p(sample["new_state"]["mouse"])
-                print("aprim", a_prim_tab)
-                #exit()
                 if isinstance(agent,Mouse):
                     targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(
                                                           sample["new_state"]["mouse"],
                                                           a_prim_tab["mouse"]).detach().squeeze()
-                    #exit()
                 else:
                     targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"]["cat"],[a_prim_tab["mouse"],a_prim_tab["cat"]]).detach().squeeze()
                 #update critic
@@ -76,40 +69,37 @@ def A2C(env:grid,
                                         sample["action"]["cat"],
                                         sample["action"]["mouse"],
                                         targets)   
-                api0, logits_ap0 = cat.p(sample["state"]["cat"], logit = True)
-                api1, logits_ap1 = mouse.p(sample["state"]["mouse"], logit = True)
+                api = {"cat":[],"mouse":[]}
+                logits = {"cat":[],"mouse":[]}
+                api["cat"], logits["cat"] = cat.p(sample["state"]["cat"], logit = True)
+                api["mouse"], logits["mouse"] = mouse.p(sample["state"]["mouse"], logit = True)
                 if label=="cat":
-
-                    logpi = F.cross_entropy(logits_ap0,rep_ac(api0),weight = None, reduction = 'none')
-                    #print("logits_ap0",logits_ap0)
-                    #print(logpi)
-                    #print(torch.sum(torch.mul(torch.log(F.softmax(logits_ap0,dim=1)),rep_ac(api0)),dim=1))
-                    #exit()
+                    logpi = F.cross_entropy(logits["cat"],rep_ac(api["cat"]),weight = None, reduction = 'none')
                 elif label=="mouse":
-                    logpi = F.cross_entropy(logits_ap1,rep_ac(api1),weight = None, reduction = 'none')
+                    logpi = F.cross_entropy(logits["mouse"],rep_ac(api["mouse"]),weight = None, reduction = 'none')
                 else:
                     print("erreur")
                     exit()
                 #update actor
                 if isinstance(agent,Mouse):
                     nploss = agent.updatePi(
-                                    api1,
+                                    api["mouse"],
                                     logpi,
                                     sample["state"]["mouse"])
                 else:
                     nploss = agent.updatePi(
-                                    api0,
-                                    api1,
+                                    api["cat"],
+                                    api["mouse"],
                                     logpi,
-                                    [sample["state"]["cat"],sample["state"]["mouse"]])
+                                    sample["state"]["cat"])
                 #exit()
                 loss_pi[label].append(nploss.item())
                 loss_Q[label].append(loss_.item())
                 continue
         mouse.update_target_net()
         cat.update_target_net()
-        mouse.epsilon=max(0.05,mouse.epsilon*fact)
-        cat.epsilon=max(0.05,cat.epsilon*fact)
+        mouse.epsilon=max(0.1,mouse.epsilon*fact)
+        cat.epsilon=max(0.1,cat.epsilon*fact)
         if n>0:
             retour_episodes["mouse"].append(return_mouse.item())
             retour_episodes["cat"].append(return_cat.item())

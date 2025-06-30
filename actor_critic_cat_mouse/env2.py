@@ -47,7 +47,7 @@ class grid:
     def terminated(self):
         "says if the episode is teminated"
         cheese_reached = self.mouse_pos==self.target_mouse
-        terminated = cheese_reached or self.catch==10
+        terminated = cheese_reached
         return terminated  
     def truncated(self):
         return self.count>self.max_steps
