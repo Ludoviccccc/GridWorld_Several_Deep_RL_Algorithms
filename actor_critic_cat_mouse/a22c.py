@@ -49,6 +49,7 @@ def A2C(env:grid,
             if j<1:
                 continue
             for label,agent in [("mouse",mouse),("cat",cat)]:
+                print("label", label)
                 sample = agent.buffer.sample(min(batch_size,len(agent.buffer.memory_state)))
                 #print("memory",agent.buffer.memory_state)
                 #print("sample", sample["state"])
@@ -64,17 +65,16 @@ def A2C(env:grid,
                                                           a_prim_tab["mouse"]).detach().squeeze()
                     #exit()
                 else:
-                    targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"]["cat"],a_prim_tab["mouse"]).detach().squeeze()
+                    targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"]["cat"],[a_prim_tab["mouse"],a_prim_tab["cat"]]).detach().squeeze()
                 #update critic
                 for k in range(K):
                     if isinstance(agent,Mouse):
                         loss_ = agent.updateQ(sample["state"]["mouse"],sample["action"]["mouse"],targets)
                     else:
                         loss_ = agent.updateQ(
-                                        rep_cl(sample["state"]["cat"]),
-                                        rep_cl(sample["state"]["mouse"]),
-                                        rep_ac(sample["action"]["cat"]),
-                                        rep_ac(sample["action"]["mouse"]),
+                                        sample["state"]["cat"],
+                                        sample["action"]["cat"],
+                                        sample["action"]["mouse"],
                                         targets)   
                 api0, logits_ap0 = cat.p(sample["state"]["cat"], logit = True)
                 api1, logits_ap1 = mouse.p(sample["state"]["mouse"], logit = True)
@@ -105,7 +105,7 @@ def A2C(env:grid,
                 #exit()
                 loss_pi[label].append(nploss.item())
                 loss_Q[label].append(loss_.item())
-                exit()
+                continue
         mouse.update_target_net()
         cat.update_target_net()
         mouse.epsilon=max(0.05,mouse.epsilon*fact)

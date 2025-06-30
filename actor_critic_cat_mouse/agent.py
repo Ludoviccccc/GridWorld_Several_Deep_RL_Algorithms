@@ -119,7 +119,8 @@ class Cat(Tool):
             return self.q(torch.Tensor(state).unsqueeze(0),self.rep_ac([actions[0]]),self.rep_ac([actions[1]]))
         else:
             return self.q(torch.Tensor(state),self.rep_ac(actions[0]),self.rep_ac(actions[1]))
-    def Qf_target(self,state:np.ndarray,action:int):
+    def Qf_target(self,state:np.ndarray,actions:int):
+        print('actions', actions)
         if state.ndim ==1:
             return self.q_target(torch.Tensor(state).unsqueeze(0),self.rep_ac(actions[0]),self.rep_ac(actions[1])).detach()
         else:
