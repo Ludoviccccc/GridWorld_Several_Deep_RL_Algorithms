@@ -13,6 +13,7 @@ class policy(nn.Module):
         self.linear4 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
     def forward(self, x, logit =False):
+        x = torch.mul(torch.Tensor(x),1.0/self.Nx)
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)
@@ -38,7 +39,7 @@ class policy2(nn.Module):
         self.linear4 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
     def forward(self,s1, logit =False):
-        x = torch.Tensor(s1)
+        x = torch.mul(torch.Tensor(s1),1.0/self.Nx)
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)

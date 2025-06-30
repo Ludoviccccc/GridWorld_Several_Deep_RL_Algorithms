@@ -40,6 +40,7 @@ def A2C(env:grid,
             s_cat,reward_cat = env.transition_cat(a_tab["cat"])
             s_mouse,reward_mouse = env.transition_mouse(a_tab["mouse"])
             s_tab_prim = {"cat":s_cat,"mouse":s_mouse}
+            #######"corriger
             cat.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_cat})
             mouse.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_mouse})
             s_tab = s_tab_prim
@@ -58,7 +59,7 @@ def A2C(env:grid,
                                                           sample["new_state"]["mouse"],
                                                           a_prim_tab["mouse"]).detach().squeeze()
                 else:
-                    targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"]["cat"],[a_prim_tab["mouse"],a_prim_tab["cat"]]).detach().squeeze()
+                    targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"]["cat"],[a_prim_tab["cat"],a_prim_tab["mouse"]]).detach().squeeze()
                 #update critic
                 for k in range(K):
                     if isinstance(agent,Mouse):
@@ -71,7 +72,7 @@ def A2C(env:grid,
                                         targets)   
                 api = {"cat":[],"mouse":[]}
                 logits = {"cat":[],"mouse":[]}
-                api["cat"], logits["cat"] = cat.p(sample["state"]["cat"], logit = True)
+                api["cat"],   logits["cat"] = cat.p(sample["state"]["cat"], logit = True)
                 api["mouse"], logits["mouse"] = mouse.p(sample["state"]["mouse"], logit = True)
                 if label=="cat":
                     logpi = F.cross_entropy(logits["cat"],rep_ac(api["cat"]),weight = None, reduction = 'none')
@@ -95,7 +96,6 @@ def A2C(env:grid,
                 #exit()
                 loss_pi[label].append(nploss.item())
                 loss_Q[label].append(loss_.item())
-                continue
         mouse.update_target_net()
         cat.update_target_net()
         mouse.epsilon=max(0.1,mouse.epsilon*fact)

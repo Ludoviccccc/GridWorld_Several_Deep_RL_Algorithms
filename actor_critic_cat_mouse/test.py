@@ -40,18 +40,18 @@ if __name__=="__main__":
     nx = 5
     ny = 5
     # large learning rates implies more risk to local minima
-    lr_pi = 1e-5
-    lr_q = 1e-5
+    lr_pi = 1e-4
+    lr_q = 1e-4
     batch_size = 128
     buffer_size = 2048
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
-    K = 3
+    K = 2
     n_epochs = 400
     loadpath = "loads"
     loadopt = "opt"
     max_steps = 60
-    fact = .999
-    tau = .01
+    fact = .9995
+    tau = .005
 
 
 
