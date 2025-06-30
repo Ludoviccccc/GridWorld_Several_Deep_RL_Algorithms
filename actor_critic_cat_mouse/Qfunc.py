@@ -1,16 +1,16 @@
 import torch.nn as nn
 import torch
 class Q(nn.Module):
-    def __init__(self,Nx,Ny,Na):
+    def __init__(self,env):
         super(Q,self).__init__()
-        self.Na = Na
-        self.linear1 = nn.Linear(2 + 2*Na,16)
-        self.linear2 = nn.Linear(64,32)
+        self.Na = env.Na
+        self.linear1 = nn.Linear(2 + 2*self.Na,16)
+        self.linear2 = nn.Linear(16,32)
         self.linear3 = nn.Linear(32,16)
         self.linear4 = nn.Linear(16,1)
         self.actv = nn.ReLU()
-    def forward(self, s0,s1,a0,a1):
-        x = torch.cat((s0,s1,a0,a1),dim=1)
+    def forward(self, s_cat,a_cat,a_mouse):
+        x = torch.cat((s_cat,a_cat,a_mouse),dim=1)
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)

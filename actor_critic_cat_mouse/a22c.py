@@ -76,8 +76,8 @@ def A2C(env:grid,
                                         rep_ac(sample["action"]["cat"]),
                                         rep_ac(sample["action"]["mouse"]),
                                         targets)   
-                api0, logits_ap0 = cat.p(rep_cl(sample["state"]["cat"]),rep_cl(sample["state"]["mouse"]), logit = True)
-                api1, logits_ap1 = mouse.p(rep_cl(sample["state"]["mouse"]), logit = True)
+                api0, logits_ap0 = cat.p(sample["state"]["cat"], logit = True)
+                api1, logits_ap1 = mouse.p(sample["state"]["mouse"], logit = True)
                 if label=="cat":
 
                     logpi = F.cross_entropy(logits_ap0,rep_ac(api0),weight = None, reduction = 'none')
@@ -95,16 +95,17 @@ def A2C(env:grid,
                     nploss = agent.updatePi(
                                     api1,
                                     logpi,
-                                    rep_cl(sample["state"]["mouse"]))
+                                    sample["state"]["mouse"])
                 else:
                     nploss = agent.updatePi(
                                     api0,
                                     api1,
                                     logpi,
-                                    [rep_cl(sample["state"]["cat"]),rep_cl(sample["state"]["mouse"])])
-                exit()
+                                    [sample["state"]["cat"],sample["state"]["mouse"]])
+                #exit()
                 loss_pi[label].append(nploss.item())
                 loss_Q[label].append(loss_.item())
+                exit()
         mouse.update_target_net()
         cat.update_target_net()
         mouse.epsilon=max(0.05,mouse.epsilon*fact)

@@ -68,5 +68,6 @@ if __name__=="__main__":
         print(state_mouse, state_cat)
         print(env.mouse_pos,env.cat_pos)
         print(mouse.Qf(state_mouse,[2]))
-        print(cat.Qf(state_cat,[2]))
+        print(cat.Qf(state_cat,[2,4]))
+        exit()
     A2C(env,mouse,cat,batch_size,n_epochs)
