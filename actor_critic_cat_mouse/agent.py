@@ -60,11 +60,8 @@ class Mouse(Tool):
                 api:int,
                  logpi,
                  s):
-#        self.optimizerpi.zero_grad()
         advantage = self.Qf(s,api).squeeze().detach()
         advantage = advantage.detach()
-        #print("avantage", advantage)
-        #print("logpi", logpi)
         NegativPseudoLoss = torch.mean(torch.mul(logpi.squeeze(),advantage)) 
         NegativPseudoLoss.backward()
         self.optimizerpi.step()
@@ -100,9 +97,11 @@ class Cat(Tool):
                 buffer_size:int=10000
                 ):
         super(Cat,self).__init__(env)
-        self.p = policy2(env)
+        self.p = policy(env)
         self.q = Q(env)
         self.q_target = Q(env)
+        for (name_q, param_q),(name_q_target,param_q_target) in zip(self.q.state_dict().items(),self.q_target.state_dict().items()):
+            param_q_target.copy_(param_q)
         self.optimizerpi = optim.Adam(self.p.parameters(),lr=lr_pi)
         self.optimizer_q = optim.Adam(self.q.parameters(), lr = lr_q)
         self.rep_ac = Representation_action(env.Na)
@@ -113,17 +112,10 @@ class Cat(Tool):
         self.optpath = optpath
         self.loadpath = loadpath
         self.buffer = Buffer()
-    def Qf(self,state:np.ndarray,actions:list[np.ndarray]):
-        if state.ndim ==1:
-            return self.q(torch.Tensor(state).unsqueeze(0),self.rep_ac([actions[0]]),self.rep_ac([actions[1]]))
-        else:
-            return self.q(torch.Tensor(state),self.rep_ac(actions[0]),self.rep_ac(actions[1]))
-    def Qf_target(self,state:np.ndarray,actions:int):
-        if state.ndim ==1:
-            return self.q_target(torch.Tensor(state).unsqueeze(0),self.rep_ac(actions[0]),self.rep_ac(actions[1])).detach()
-        else:
-            return self.q_target(torch.Tensor(state),self.rep_ac(actions[0]),self.rep_ac(actions[1])).detach()
-
+    def Qf(self,state:dict,actions:list[np.ndarray]):
+        return self.q(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions[0]),self.rep_ac(actions[1]))
+    def Qf_target(self,state:dict,actions:int):
+        return self.q_target(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions[0]),self.rep_ac(actions[1]))
     def load(self,start:int):
         self.q.load_state_dict(torch.load(os.path.join(self.loadpath,f"q_0_load_{start}.pt"),weights_only=True))
         self.p.load_state_dict(torch.load(os.path.join(self.loadpath,f"pi_0_load_{start}.pt"),weights_only=True))
@@ -148,22 +140,21 @@ class Cat(Tool):
         self.optimizerpi.step()
         return NegativPseudoLoss
     def updateQ(self,
-                states0,
+                states:dict,
                 actions0, 
                 actions1, 
                 targets):  
         self.optimizer_q.zero_grad()
-        loss = F.mse_loss(self.Qf(states0,[actions0,actions1]).squeeze(),targets.squeeze())
+        loss = F.mse_loss(self.Qf(states,[actions0,actions1]).squeeze(),targets.squeeze())
         loss.backward()
         self.optimizer_q.step()
         return loss
-    def epsilon_greedy_policy(self,state:np.ndarray):
+    def epsilon_greedy_policy(self,state:dict):
         if np.random.binomial(1,self.epsilon):
             out = np.random.randint(0,self.Na)
         else:
-            out = self.p(state)
+            out = self.p([state["cat"]],[state["mouse"]])
             out = int(out.detach().item())
         return out 
     def __call__(self,state:np.ndarray):
-        state = torch.Tensor(state).unsqueeze(0)
         return self.epsilon_greedy_policy(state)

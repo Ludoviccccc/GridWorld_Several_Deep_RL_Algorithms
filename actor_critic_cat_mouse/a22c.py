@@ -36,7 +36,7 @@ def A2C(env:grid,
         return_cat = torch.Tensor([0])
         return_mouse = torch.Tensor([0])
         while not env.terminated() and not env.truncated():
-            a_tab = {"cat":cat([s_tab["cat"]]), "mouse":mouse([s_tab["mouse"]])}
+            a_tab = {"cat":cat(s_tab), "mouse":mouse([s_tab["mouse"]])}
             _,reward_cat = env.transition_cat(a_tab["cat"])
             _,reward_mouse = env.transition_mouse(a_tab["mouse"])
             s_tab_prim = {"cat":env.state_cat(),"mouse": env.state_mouse()}
@@ -48,31 +48,31 @@ def A2C(env:grid,
             return_mouse += reward_mouse*gamma**n
             if j<2:
                 continue
-            for label,agent in [("mouse",mouse)]:
+            for label,agent in [("mouse",mouse),("cat",cat)]:
                 sample = agent.buffer.sample(min(batch_size,len(agent.buffer.memory_state["mouse"])))
                 #print(sample)
                 a_prim_tab = {"cat":[],"mouse":[]}
-                #a_prim_tab["cat"] = cat.p(sample["new_state"]["cat"])
+                a_prim_tab["cat"] = cat.p(sample["new_state"]["cat"],sample["new_state"]["mouse"])
                 a_prim_tab["mouse"] = mouse.p(sample["new_state"]["mouse"])
                 if isinstance(agent,Mouse):
                     targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(
                                                           sample["new_state"]["mouse"],
                                                           a_prim_tab["mouse"]).detach().squeeze()
                 else:
-                    targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"]["cat"],[a_prim_tab["cat"],a_prim_tab["mouse"]]).detach().squeeze()
+                    targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"],[a_prim_tab["cat"],a_prim_tab["mouse"]]).detach().squeeze()
                 #update critic
                 for k in range(K):
                     if isinstance(agent,Mouse):
                         loss_ = agent.updateQ(sample["state"]["mouse"],sample["action"]["mouse"],targets)
                     else:
-                        loss_ = agent.updateQ(sample["state"]["cat"],
+                        loss_ = agent.updateQ(sample["state"],
                                             sample["action"]["cat"],
                                             sample["action"]["mouse"],
                                             targets)   
                 api = {"cat":[],"mouse":[]}
                 logits = {"cat":[],"mouse":[]}
                 agent.optimizerpi.zero_grad()
-                #api["cat"],   logits["cat"] = cat.p(sample["state"]["cat"], logit = True)
+                api["cat"],   logits["cat"] = cat.p(sample["state"]["cat"],sample["state"]["mouse"], logit = True)
                 api["mouse"], logits["mouse"] = mouse.p(sample["state"]["mouse"], logit = True)
                 if label=="cat":
                     logpi = F.cross_entropy(logits["cat"],rep_ac(api["cat"]),weight = None, reduction = 'none')
@@ -89,17 +89,16 @@ def A2C(env:grid,
                                     logpi,
                                     sample["state"]["mouse"])
                 else:
-                    pass
-                    #nploss = agent.updatePi(
-                    #                api["cat"],
-                    #                api["mouse"],
-                    #                logpi,
-                    #                sample["state"]["cat"])
+                    nploss = agent.updatePi(
+                                    api["cat"],
+                                    api["mouse"],
+                                    logpi,
+                                    sample["state"])
                 #exit()
                 loss_pi[label].append(nploss.item())
                 loss_Q[label].append(loss_.item())
         mouse.update_target_net()
-        #cat.update_target_net()
+        cat.update_target_net()
         #mouse.epsilon=max(0.02,mouse.epsilon*fact)
         #cat.epsilon=max(0.02,cat.epsilon*fact)
         if n>0:
