@@ -8,6 +8,7 @@ from env import grid
 import numpy as np
 import os
 from buffer import Buffer
+from torch.nn.utils import clip_grad_norm_
 class Tool:
     def __init__(self,env):
         self.rep_ac = Representation_action(env.Na)
@@ -27,8 +28,11 @@ class Mouse(Tool):
         self.p = policy2(env)
         self.q = Q2(env)
         self.q_target = Q2(env)
+        for (name_q, param_q),(name_q_target,param_q_target) in zip(self.q.state_dict().items(),self.q_target.state_dict().items()):
+            param_q_target.copy_(param_q)
         self.optimizerpi = optim.Adam(self.p.parameters(),lr=   lr_pi)
         self.optimizer_q = optim.Adam(self.q.parameters(), lr = lr_q)
+        #clip_grad_norm_(self.p.parameters(),1e-4)
         self.epsilon = epsilon
         self.tau = tau
         self.Na = env.Na
@@ -36,15 +40,9 @@ class Mouse(Tool):
         self.optpath = optpath
         self.buffer = Buffer(maxsize=buffer_size)
     def Qf(self,state:np.ndarray,action:list[int]):
-        if state.ndim ==1:
-            return self.q(torch.Tensor(state).unsqueeze(0),self.rep_ac(action))
-        else:
-            return self.q(torch.Tensor(state),self.rep_ac(action))
+        return self.q(self.rep_cl(state),self.rep_ac(action))
     def Qf_target(self,state:np.ndarray,action:int):
-        if state.ndim ==1:
-            return self.q_target(torch.Tensor(state).unsqueeze(0),self.rep_ac([action])).detach()
-        else:
-            return self.q_target(torch.Tensor(state),self.rep_ac(action)).detach()
+        return self.q_target(self.rep_cl(state),self.rep_ac(action)).detach()
 
     def load(self,start:int):
         self.q.load_state_dict(torch.load(os.path.join(self.loadpath,f"q_1_load_{start}.pt"),weights_only=True))
@@ -62,11 +60,12 @@ class Mouse(Tool):
                 api:int,
                  logpi,
                  s):
-        self.optimizerpi.zero_grad()
-        advantage = self.q(s,self.rep_ac(api)).squeeze().detach()
+#        self.optimizerpi.zero_grad()
+        advantage = self.Qf(s,api).squeeze().detach()
         advantage = advantage.detach()
+        #print("avantage", advantage)
+        #print("logpi", logpi)
         NegativPseudoLoss = torch.mean(torch.mul(logpi.squeeze(),advantage)) 
-        print("Neg", NegativPseudoLoss)
         NegativPseudoLoss.backward()
         self.optimizerpi.step()
         return NegativPseudoLoss
@@ -141,7 +140,7 @@ class Cat(Tool):
                  api1:int,
                  logpi,
                  state):
-        self.optimizerpi.zero_grad()
+#        self.optimizerpi.zero_grad()
         advantage = self.Qf(state,[api0,api1]).squeeze()
         advantage = advantage.detach()
         NegativPseudoLoss = torch.mean(torch.mul(logpi.squeeze(),advantage)) 

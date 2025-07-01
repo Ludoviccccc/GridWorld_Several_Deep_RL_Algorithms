@@ -2,6 +2,7 @@ import torch
 from torch import distributions
 import torch.nn as nn
 import torch.nn.functional as F
+from rep import Representation
 class policy(nn.Module):
     def __init__(self,env):
         super(policy,self).__init__()
@@ -34,22 +35,23 @@ class policy2(nn.Module):
         self.Nx = env.Nx
         self.Ny = env.Ny
         self.Na = env.Na
-        self.linear1 = nn.Linear(2,16)
-        self.linear2 = nn.Linear(16,16)
+        self.linear1 = nn.Linear(env.Nx*env.Ny,32)
+        self.linear2 = nn.Linear(32,16)
         self.linear4 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
-        self.actv2 = nn.Sigmoid()
+        self.rep_cl = Representation(self.Nx,self.Ny)
     def forward(self,s1, logit =False):
-        x = torch.mul(torch.Tensor(s1),1.0/self.Nx)
-        x = torch.Tensor(s1)
+        x = self.rep_cl(s1)
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)
         out = self.actv(out)
         logits = self.linear4(out)
+        #logits = self.linear4(out)
+        #print(F.softmax(logits,dim=1))
         dist = distributions.Categorical(F.softmax(logits,dim=1))  
         action  = dist.sample([1]).squeeze()
-        #print(F.softmax(logits,dim=1))
+        print("action", action)
         if logit:
             out =  action, logits
         else:
