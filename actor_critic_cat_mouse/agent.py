@@ -22,7 +22,8 @@ class Mouse(Tool):
                 tau:float=0.01,
                 loadpath:str = "loads",
                 optpath:str ="opt",
-                buffer_size:int=10000
+                buffer_size:int=10000,
+                K:int=1
                 ):
         super(Mouse,self).__init__(env)
         self.p = policy2(env)
@@ -94,9 +95,11 @@ class Cat(Tool):
                 tau:float=0.01,
                 loadpath:str = "loads",
                 optpath:str ="opt",
-                buffer_size:int=10000
+                buffer_size:int=10000,
+                K:int=1
                 ):
         super(Cat,self).__init__(env)
+        self.k = K
         self.p = policy(env)
         self.q = Q(env)
         self.q_target = Q(env)
@@ -142,10 +145,11 @@ class Cat(Tool):
                 states:dict,
                 actions:dict,
                 targets):  
-        self.optimizer_q.zero_grad()
-        loss = F.mse_loss(self.Qf(states,actions).squeeze(),targets.squeeze())
-        loss.backward()
-        self.optimizer_q.step()
+        for k in range(self.k):
+            self.optimizer_q.zero_grad()
+            loss = F.mse_loss(self.Qf(states,actions).squeeze(),targets.squeeze())
+            loss.backward()
+            self.optimizer_q.step()
         return loss
     def epsilon_greedy_policy(self,state:dict):
         if np.random.binomial(1,self.epsilon):

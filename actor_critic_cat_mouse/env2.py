@@ -57,7 +57,7 @@ class grid:
         return s_out
     def reward_cat(self):
         self.catch+=1*(self.cat_pos==self.mouse_pos)
-        reward = (100.0)*(self.cat_pos==self.mouse_pos)  + (-10.0)*(self.cat_pos ==self.cat_previous) 
+        reward = (-1.0)*((self.cat_pos[0] - self.mouse_pos[0])**2 + (self.cat_pos[1] - self.mouse_pos[1])**2)
         return reward
     def reward_mouse(self):
         reward = (100.0)*(self.target_mouse==self.mouse_pos) + (-10.0)*(self.mouse_pos==self.mouse_previous)
