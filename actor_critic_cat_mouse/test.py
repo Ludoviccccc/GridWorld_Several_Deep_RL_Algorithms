@@ -48,7 +48,7 @@ if __name__=="__main__":
     buffer_size = 600
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
     K = 2
-    n_epochs = 3000
+    n_epochs = 200
     loadpath = "loads"
     loadopt = "opt"
     max_steps = 100
@@ -60,6 +60,6 @@ if __name__=="__main__":
 
     env = grid(nx,ny,max_steps = max_steps)
     env.reset()
-    mouse = Mouse(env,epsilon = epsilon,buffer_size = buffer_size,lr_pi=mouse_lr_pi, lr_q=mouse_lr_q)
-    cat = Cat(env,epsilon = 0.1, buffer_size = buffer_size, lr_pi=cat_lr_pi, lr_q=cat_lr_q)
-    A2C(env,mouse,cat,batch_size,n_epochs)
+    mouse = Mouse(env,epsilon = epsilon,buffer_size = buffer_size,lr_pi=mouse_lr_pi, lr_q=mouse_lr_q, tau=tau)
+    cat = Cat(env,epsilon = 0.1, buffer_size = buffer_size, lr_pi=cat_lr_pi, lr_q=cat_lr_q,tau = tau)
+    A2C(env,mouse,cat,batch_size,n_epochs,fact = fact,K=K)
