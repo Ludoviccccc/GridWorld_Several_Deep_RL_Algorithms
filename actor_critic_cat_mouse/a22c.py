@@ -93,8 +93,8 @@ def A2C(env:grid,
                 loss_Q[label].append(loss_.item())
         mouse.update_target_net()
         cat.update_target_net()
-        #mouse.epsilon=max(0.02,mouse.epsilon*fact)
-        #cat.epsilon=max(0.02,cat.epsilon*fact)
+        mouse.epsilon=max(0.02,mouse.epsilon*fact)
+        cat.epsilon=max(0.02,cat.epsilon*fact)
         if n>0:
             retour_episodes["mouse"].append(return_mouse.item())
             retour_episodes["cat"].append(return_cat.item())

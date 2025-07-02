@@ -11,7 +11,7 @@ from a22c import A2C
 from rep import Representation, Representation_action
 from agent import Cat, Mouse
 import numpy as np
-def test(mouse:Mouse,env:grid):
+def test(mouse:Mouse,cat:Mouse,env:grid):
     mouse.epsilon = 0
     j =0
     T = env.grid()
@@ -23,22 +23,23 @@ def test(mouse:Mouse,env:grid):
         env.wset()
     n = 0
     while not env.terminated():
-        s_mouse,_ = env.transition_mouse(mouse.act(env.mouse))
+        j+=1
+        s_tab = {"cat":env.state_cat(),"mouse": env.state_mouse()}
+        _,_ = env.transition_mouse(mouse([s_tab["mouse"]]))
+        _,_ = env.transition_cat(cat(s_tab))
         T = env.grid()
         plt.figure()
         plt.imshow(T)
         plt.savefig(f"image/frame{j}")
         plt.close()
-    exit()
 
 if __name__=="__main__":
-    train = True
-    testmode = False
-    start = 0
-    epsilon = .3
+    testmode = True
+    start = 240
+    epsilon = .8
     gamma = .99
     nx = 4
-    ny = 4
+    ny = 5
     # large learning rates implies more risk to local minima
     mouse_lr_pi = 1e-3
     mouse_lr_q = 1e-3
@@ -48,18 +49,21 @@ if __name__=="__main__":
     buffer_size = 600
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
     K = 2
-    n_epochs = 200
+    n_epochs = 250
     loadpath = "loads"
     loadopt = "opt"
     max_steps = 100
-    fact = .999
+    fact = .95
     tau = .01
-
-
-
 
     env = grid(nx,ny,max_steps = max_steps)
     env.reset()
     mouse = Mouse(env,epsilon = epsilon,buffer_size = buffer_size,lr_pi=mouse_lr_pi, lr_q=mouse_lr_q, tau=tau)
-    cat = Cat(env,epsilon = 0.1, buffer_size = buffer_size, lr_pi=cat_lr_pi, lr_q=cat_lr_q,tau = tau,K = 5)
-    A2C(env,mouse,cat,batch_size,n_epochs,fact = fact)
+    cat = Cat(env,epsilon = epsilon, buffer_size = buffer_size, lr_pi=cat_lr_pi, lr_q=cat_lr_q,tau = tau,K = 5)
+    if start>0:
+        mouse.load(start)
+        cat.load(start)
+    if testmode:
+        test(mouse,cat,env)
+    else:
+        A2C(env,mouse,cat,batch_size,n_epochs,fact = fact)

@@ -158,5 +158,5 @@ class Cat(Tool):
             out = self.p([state["cat"]],[state["mouse"]])
             out = int(out.detach().item())
         return out 
-    def __call__(self,state:np.ndarray):
+    def __call__(self,state:dict):
         return self.epsilon_greedy_policy(state)

@@ -67,7 +67,7 @@ class grid:
         s_cat = self.cat_pos
         T = np.zeros((self.Nx,self.Ny))
         T[s_mouse[0], s_mouse[1]] = 1
-        #T[s_cat[0], s_cat[1]] = -1
+        T[s_cat[0], s_cat[1]] = -1
         T[self.target_mouse[0],self.target_mouse[1]] = 5
         print(T)
         return T
