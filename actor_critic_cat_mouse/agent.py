@@ -112,10 +112,10 @@ class Cat(Tool):
         self.optpath = optpath
         self.loadpath = loadpath
         self.buffer = Buffer()
-    def Qf(self,state:dict,actions:list[np.ndarray]):
-        return self.q(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions[0]),self.rep_ac(actions[1]))
-    def Qf_target(self,state:dict,actions:int):
-        return self.q_target(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions[0]),self.rep_ac(actions[1]))
+    def Qf(self,state:dict,actions:dict):
+        return self.q(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
+    def Qf_target(self,state:dict,actions:dict):
+        return self.q_target(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
     def load(self,start:int):
         self.q.load_state_dict(torch.load(os.path.join(self.loadpath,f"q_0_load_{start}.pt"),weights_only=True))
         self.p.load_state_dict(torch.load(os.path.join(self.loadpath,f"pi_0_load_{start}.pt"),weights_only=True))
@@ -128,12 +128,11 @@ class Cat(Tool):
         for (name_q, param_q),(name_q_target,param_q_target) in zip(self.q.state_dict().items(),self.q_target.state_dict().items()):
             param_q_target.copy_(self.tau*param_q + (1.0 - self.tau)*param_q_target)
     def updatePi(self,
-                 api0:int,
-                 api1:int,
+                 api:dict,
                  logpi,
-                 state):
+                 state:dict):
 #        self.optimizerpi.zero_grad()
-        advantage = self.Qf(state,[api0,api1]).squeeze()
+        advantage = self.Qf(state,api).squeeze()
         advantage = advantage.detach()
         NegativPseudoLoss = torch.mean(torch.mul(logpi.squeeze(),advantage)) 
         NegativPseudoLoss.backward()
@@ -141,11 +140,10 @@ class Cat(Tool):
         return NegativPseudoLoss
     def updateQ(self,
                 states:dict,
-                actions0, 
-                actions1, 
+                actions:dict,
                 targets):  
         self.optimizer_q.zero_grad()
-        loss = F.mse_loss(self.Qf(states,[actions0,actions1]).squeeze(),targets.squeeze())
+        loss = F.mse_loss(self.Qf(states,actions).squeeze(),targets.squeeze())
         loss.backward()
         self.optimizer_q.step()
         return loss

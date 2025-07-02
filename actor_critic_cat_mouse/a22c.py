@@ -59,16 +59,13 @@ def A2C(env:grid,
                                                           sample["new_state"]["mouse"],
                                                           a_prim_tab["mouse"]).detach().squeeze()
                 else:
-                    targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"],[a_prim_tab["cat"],a_prim_tab["mouse"]]).detach().squeeze()
+                    targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"],a_prim_tab).detach().squeeze()
                 #update critic
                 for k in range(K):
                     if isinstance(agent,Mouse):
                         loss_ = agent.updateQ(sample["state"]["mouse"],sample["action"]["mouse"],targets)
                     else:
-                        loss_ = agent.updateQ(sample["state"],
-                                            sample["action"]["cat"],
-                                            sample["action"]["mouse"],
-                                            targets)   
+                        loss_ = agent.updateQ(sample["state"],sample["action"],targets)   
                 api = {"cat":[],"mouse":[]}
                 logits = {"cat":[],"mouse":[]}
                 agent.optimizerpi.zero_grad()
@@ -90,8 +87,7 @@ def A2C(env:grid,
                                     sample["state"]["mouse"])
                 else:
                     nploss = agent.updatePi(
-                                    api["cat"],
-                                    api["mouse"],
+                                    api,
                                     logpi,
                                     sample["state"])
                 #exit()
