@@ -40,11 +40,11 @@ class Mouse(Tool):
         self.loadpath = loadpath
         self.optpath = optpath
         self.buffer = Buffer(maxsize=buffer_size)
+        self.k = K
     def Qf(self,state:np.ndarray,action:list[int]):
         return self.q(self.rep_cl(state),self.rep_ac(action))
     def Qf_target(self,state:np.ndarray,action:int):
         return self.q_target(self.rep_cl(state),self.rep_ac(action)).detach()
-
     def load(self,start:int):
         self.q.load_state_dict(torch.load(os.path.join(self.loadpath,f"q_1_load_{start}.pt"),weights_only=True))
         self.p.load_state_dict(torch.load(os.path.join(self.loadpath,f"pi_1_load_{start}.pt"),weights_only=True))
@@ -71,11 +71,12 @@ class Mouse(Tool):
                 states1,
                 actions1, 
                 targets):  
-        self.optimizer_q.zero_grad()
-        loss = F.mse_loss(self.Qf(states1,actions1).squeeze(),targets.squeeze())
-        loss.backward()
-        self.optimizer_q.step()
-        return loss
+        for k in range(self.k):
+            self.optimizer_q.zero_grad()
+            loss = F.mse_loss(self.Qf(states1,actions1).squeeze(),targets.squeeze())
+            loss.backward()
+            self.optimizer_q.step()
+            return loss
     def epsilon_greedy_policy(self,
                             state:int):
         if np.random.binomial(1,self.epsilon):

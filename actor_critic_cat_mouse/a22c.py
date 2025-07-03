@@ -14,10 +14,10 @@ def A2C(env:grid,
         batch_size:int,
         n_episodes:int,
         freqsave=100, 
-        epsilon = 0.1,
         start:int = 0, 
         gamma:int =.99,
-        fact = .99):
+        fact = .99,
+        min_eps:float=0.1):
     retour_episodes = {"cat":[],"mouse":[]}
     loss_pi = {"cat":[],"mouse":[]}
     loss_Q = {"cat":[],"mouse":[]}
@@ -93,8 +93,8 @@ def A2C(env:grid,
                 loss_Q[label].append(loss_.item())
         mouse.update_target_net()
         cat.update_target_net()
-        mouse.epsilon=max(0.02,mouse.epsilon*fact)
-        cat.epsilon=max(0.02,cat.epsilon*fact)
+        mouse.epsilon=max(min_eps,mouse.epsilon*fact)
+        cat.epsilon=max(min_eps,cat.epsilon*fact)
         if n>0:
             retour_episodes["mouse"].append(return_mouse.item())
             retour_episodes["cat"].append(return_cat.item())
