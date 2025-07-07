@@ -36,15 +36,13 @@ def A2C(env:grid,
         return_mouse = torch.Tensor([0])
         while not env.terminated() and not env.truncated():
             a_tab = {"cat":cat(s_tab), "mouse":mouse([s_tab["mouse"]])}
-            _,reward_cat = env.transition_cat(a_tab["cat"])
-            _,reward_mouse = env.transition_mouse(a_tab["mouse"])
-            s_tab_prim = {"cat":env.state_cat(),"mouse": env.state_mouse()}
-            cat.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_cat})
-            mouse.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward_mouse})
+            s_tab_prim,reward = env.transition(a_tab)
+            cat.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward["cat"]})
+            mouse.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward["mouse"]})
             s_tab = s_tab_prim
             n+=1
-            return_cat += reward_cat*gamma**n
-            return_mouse += reward_mouse*gamma**n
+            return_cat += reward["cat"]*(gamma**n)
+            return_mouse += reward["mouse"]*(gamma**n)
             if j<2:
                 continue
             for label,agent in [("mouse",mouse),("cat",cat)]:
@@ -107,15 +105,15 @@ def A2C(env:grid,
         if j%20==0 and j>0:
             cat.save(j)
             mouse.save(j)
-        if j%100==0 and j>=100:
+        if j%100==0 and j>=200:
             plt.figure()
-            plt.plot(retour_episodes["cat"], label="return cat episode for initial state")
+            plt.plot(retour_episodes["cat"][:], label="return cat episode for initial state")
             plt.legend()
             plt.savefig("plot/reward_cat")
             plt.close()
 
             plt.figure()
-            plt.plot(retour_episodes["mouse"], label="retour mouse episode for initial state")
+            plt.plot(retour_episodes["mouse"][:], label="retour mouse episode for initial state")
             plt.legend()
             plt.savefig("plot/reward_mouse")
             plt.close()

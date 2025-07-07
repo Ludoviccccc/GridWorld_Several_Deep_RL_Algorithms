@@ -24,24 +24,23 @@ class grid:
     def transition_cat(self,a:int):
         self.cat_previous = self.cat_pos
         self.cat_pos = self.transition_single_agent(self.cat_pos,a) 
-        reward = self.reward_cat()
-        state_cat = self.state_cat()
-        self.catch+=1.0*(self.cat_pos==self.mouse_pos)
-        return state_cat,reward
+    def transition(self,a):
+        """performs state transition for bith agents
+        """
+        self.transition_cat(a["cat"])
+        self.transition_mouse(a["mouse"])
+        reward = {"cat":self.reward_cat(),"mouse":self.reward_mouse()}
+        s_tab = {"cat":self.state_cat(),"mouse":self.state_mouse()}
+        self.count+=1
+        return s_tab,reward
     def state_mouse(self):
         return  self.mouse_pos[0]*self.Ny+self.mouse_pos[1]
     def transition_mouse(self,a:int):
         self.mouse_previous = self.mouse_pos
         self.mouse_pos = self.transition_single_agent(self.mouse_pos,a) 
-        reward = self.reward_mouse()
-        terminated = self.terminated()
-        self.count+=1
-        state_mouse = self.state_mouse()
-        return state_mouse,reward
     def terminated(self):
         "says if the episode is teminated"
-        cheese_reached = self.mouse_pos==self.target_mouse
-        terminated = cheese_reached
+        terminated = self.mouse_pos==self.target_mouse  or self.cat_pos==self.mouse_pos
         return terminated  
     def truncated(self):
         return self.count>self.max_steps
@@ -56,15 +55,12 @@ class grid:
             s_out = agent_pos
         return s_out
     def reward_cat(self):
-        self.catch+=1*(self.cat_pos==self.mouse_pos)
-        #if self.cat_pos!=self.mouse_pos:
-        #    reward = (-1.0)*((self.cat_pos[0] - self.mouse_pos[0])**2 + (self.cat_pos[1] - self.mouse_pos[1])**2)
-        reward = 0
-        if self.cat_pos==self.mouse_pos:
-            reward = 10
+        #reward = (1.0)*(self.cat_pos==self.mouse_pos)# + (-1.0)*(self.cat_pos == self.cat_previous)
+        reward = (-1.0)*((self.mouse_pos[0] - self.cat_pos[0])**2 + (self.mouse_pos[1] - self.cat_pos[1])**2)# + (-10.0)*(self.mouse_pos==self.mouse_previous)
         return reward
     def reward_mouse(self):
-        reward = (100.0)*(self.target_mouse==self.mouse_pos) + (-10.0)*(self.mouse_pos==self.mouse_previous)
+        reward = (-1.0)*((self.target_mouse[0] - self.mouse_pos[0])**2 + (self.target_mouse[1] - self.mouse_pos[1])**2)# + (-10.0)*(self.mouse_pos==self.mouse_previous)
+        #reward = (10.0)*(self.target_mouse==self.mouse_pos)# + (-10.0)*(self.mouse_pos==self.mouse_previous)
         return reward
     def grid(self):
         s_mouse = self.mouse_pos
@@ -73,5 +69,9 @@ class grid:
         T[s_mouse[0], s_mouse[1]] = 1
         T[s_cat[0], s_cat[1]] = -1
         T[self.target_mouse[0],self.target_mouse[1]] = 5
+        if self.terminated():
+            print(f"termintated, episode {self.count}")
+        print("cat", self.state_cat())
+        print("mouse", self.state_mouse())
         print(T)
         return T

@@ -37,11 +37,13 @@ class policy(nn.Module):
         self.Na = env.Na
         self.linear1 = nn.Linear(2*env.Nx*env.Ny,32)
         self.linear2 = nn.Linear(32,16)
+        #self.linear3 = nn.Linear(32,16)
         self.linear4 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
         self.rep_cl = Representation(self.Nx,self.Ny)
     def forward(self,s1,s2, logit =False):
         x = torch.cat((self.rep_cl(s1),self.rep_cl(s2)),dim=1)
+        #x = self.rep_cl(s1)
         out = self.linear1(x)
         out = self.actv(out)
         out = self.linear2(out)
