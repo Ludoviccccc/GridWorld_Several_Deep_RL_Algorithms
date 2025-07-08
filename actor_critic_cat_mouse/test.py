@@ -33,8 +33,8 @@ def test(mouse:Mouse,cat:Mouse,env:grid):
         plt.close()
 
 if __name__=="__main__":
-    testmode = True
-    start = 1400
+    testmode = False
+    start = 0
     epsilon = .3
     gamma = .99
     nx = 4
@@ -49,7 +49,7 @@ if __name__=="__main__":
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
     K = 2
     K_cat = 2
-    n_epochs =  3000
+    n_epochs =  2000
     loadpath = "loads"
     loadopt = "opt"
     max_steps = 30

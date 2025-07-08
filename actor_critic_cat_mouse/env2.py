@@ -25,7 +25,8 @@ class grid:
         self.cat_previous = self.cat_pos
         self.cat_pos = self.transition_single_agent(self.cat_pos,a) 
     def transition(self,a):
-        """performs state transition for bith agents
+        """
+        Performs state transition for bith agents
         """
         self.transition_cat(a["cat"])
         self.transition_mouse(a["mouse"])
@@ -56,10 +57,11 @@ class grid:
         return s_out
     def reward_cat(self):
         #reward = (1.0)*(self.cat_pos==self.mouse_pos)# + (-1.0)*(self.cat_pos == self.cat_previous)
-        reward = (-1.0)*((self.mouse_pos[0] - self.cat_pos[0])**2 + (self.mouse_pos[1] - self.cat_pos[1])**2)# + (-10.0)*(self.mouse_pos==self.mouse_previous)
+        reward = (-1.0)*((self.mouse_pos[0] - self.cat_pos[0])**2 + (self.mouse_pos[1] - self.cat_pos[1])**2) + (-1.0)*(self.cat_pos==self.cat_previous)
         return reward
     def reward_mouse(self):
-        reward = (-1.0)*((self.target_mouse[0] - self.mouse_pos[0])**2 + (self.target_mouse[1] - self.mouse_pos[1])**2)# + (-10.0)*(self.mouse_pos==self.mouse_previous)
+        reward = (-1.0)*((self.target_mouse[0] - self.mouse_pos[0])**2 + (self.target_mouse[1] - self.mouse_pos[1])**2) + (-1.0)*(self.mouse_pos==self.target_mouse)
+        reward += (+1.0)*((self.mouse_pos[0] - self.cat_pos[0])**2 + (self.mouse_pos[1] - self.cat_pos[1])**2)
         #reward = (10.0)*(self.target_mouse==self.mouse_pos)# + (-10.0)*(self.mouse_pos==self.mouse_previous)
         return reward
     def grid(self):
