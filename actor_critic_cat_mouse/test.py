@@ -31,13 +31,10 @@ def test(mouse:Mouse,cat:Mouse,env:grid):
         plt.close()
 
 if __name__=="__main__":
-<<<<<<< HEAD
     testmode = False
-    start = 0
-=======
+    start = 800
     testmode = True
     start = 3000
->>>>>>> mouse_policy
     epsilon = .3
     gamma = .99
     nx = 4
@@ -70,6 +67,8 @@ if __name__=="__main__":
         mouse.load(start)
         cat.load(start)
     if testmode:
+        mouse.epsilon = 0
+        cat.epsilon = 0
         test(mouse,cat,env)
     else:
         A2C(env,mouse,cat,batch_size,n_epochs,fact = fact,min_eps=min_eps)
