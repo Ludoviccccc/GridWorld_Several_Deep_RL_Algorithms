@@ -60,21 +60,14 @@ def A2C(env:grid,
                 logits = {"cat":[],"mouse":[]}
                 agent.optimizerpi.zero_grad()
                 api["cat"],   logits["cat"] = cat.p(sample["state"]["cat"],sample["state"]["mouse"], logit = True)
-                api["mouse"],   logits["mouse"] = cat.p(sample["state"]["cat"],sample["state"]["mouse"], logit = True)
-                if label=="cat":
-                    logpi = F.cross_entropy(logits["cat"],rep_ac(api["cat"]),weight = None, reduction = 'none')
-                elif label=="mouse":
-                    logpi = F.cross_entropy(logits["mouse"],rep_ac(api["mouse"]),weight = None, reduction = 'none')
-                else:
-                    print("erreur")
-                    exit()
+                api["mouse"],   logits["mouse"] = mouse.p(sample["state"]["cat"],sample["state"]["mouse"], logit = True)
+                logpi = F.cross_entropy(logits[label],rep_ac(api[label]),weight = None, reduction = 'none')
                 #continue
                 #update actor
                 nploss = agent.updatePi(
                                 api,
                                 logpi,
                                 sample["state"])
-                #exit()
                 loss_pi[label].append(nploss.item())
                 loss_Q[label].append(loss_.item())
         mouse.update_target_net()

@@ -31,10 +31,8 @@ def test(mouse:Mouse,cat:Mouse,env:grid):
         plt.close()
 
 if __name__=="__main__":
-    testmode = False
-    start = 800
     testmode = True
-    start = 3000
+    start = 2000
     epsilon = .3
     gamma = .99
     nx = 4
