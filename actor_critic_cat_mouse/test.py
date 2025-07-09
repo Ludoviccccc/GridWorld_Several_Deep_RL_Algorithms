@@ -2,8 +2,6 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-from policy import policy, policy2
-from Qfunc import Q,Q2
 from env2 import grid
 import os
 import matplotlib.pyplot as plt
@@ -24,7 +22,7 @@ def test(mouse:Mouse,cat:Mouse,env:grid):
     while not env.terminated():
         j+=1
         s_tab = {"cat":env.state_cat(),"mouse": env.state_mouse()}
-        action = {"cat":cat(s_tab),"mouse":mouse([s_tab["mouse"]])}
+        action = {"cat":cat(s_tab),"mouse":mouse(s_tab)}
         env.transition(action)
         T = env.grid()
         plt.figure()
@@ -33,8 +31,13 @@ def test(mouse:Mouse,cat:Mouse,env:grid):
         plt.close()
 
 if __name__=="__main__":
+<<<<<<< HEAD
     testmode = False
     start = 0
+=======
+    testmode = True
+    start = 3000
+>>>>>>> mouse_policy
     epsilon = .3
     gamma = .99
     nx = 4

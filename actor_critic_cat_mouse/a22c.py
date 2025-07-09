@@ -35,7 +35,7 @@ def A2C(env:grid,
         return_cat = torch.Tensor([0])
         return_mouse = torch.Tensor([0])
         while not env.terminated() and not env.truncated():
-            a_tab = {"cat":cat(s_tab), "mouse":mouse([s_tab["mouse"]])}
+            a_tab = {"cat":cat(s_tab), "mouse":mouse(s_tab)}
             s_tab_prim,reward = env.transition(a_tab)
             cat.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward["cat"]})
             mouse.buffer.store({"state":s_tab,"action":a_tab,"new_state":s_tab_prim,"reward":reward["mouse"]})
@@ -50,23 +50,17 @@ def A2C(env:grid,
                 #print(sample)
                 a_prim_tab = {"cat":[],"mouse":[]}
                 a_prim_tab["cat"] = cat.p(sample["new_state"]["cat"],sample["new_state"]["mouse"])
-                a_prim_tab["mouse"] = mouse.p(sample["new_state"]["mouse"])
-                if isinstance(agent,Mouse):
-                    targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(
-                                                          sample["new_state"]["mouse"],
-                                                          a_prim_tab["mouse"]).detach().squeeze()
-                else:
-                    targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"],a_prim_tab).detach().squeeze()
+                a_prim_tab["mouse"] = mouse.p(sample["new_state"]["cat"],sample["new_state"]["mouse"])
+
+                targets =  torch.Tensor(sample["reward"]) + gamma * agent.Qf_target(sample["new_state"],a_prim_tab).detach().squeeze()
                 #update critic
-                if isinstance(agent,Mouse):
-                    loss_ = agent.updateQ(sample["state"]["mouse"],sample["action"]["mouse"],targets)
-                else:
-                    loss_ = agent.updateQ(sample["state"],sample["action"],targets)   
+
+                loss_ = agent.updateQ(sample["state"],sample["action"],targets)   
                 api = {"cat":[],"mouse":[]}
                 logits = {"cat":[],"mouse":[]}
                 agent.optimizerpi.zero_grad()
                 api["cat"],   logits["cat"] = cat.p(sample["state"]["cat"],sample["state"]["mouse"], logit = True)
-                api["mouse"], logits["mouse"] = mouse.p(sample["state"]["mouse"], logit = True)
+                api["mouse"],   logits["mouse"] = cat.p(sample["state"]["cat"],sample["state"]["mouse"], logit = True)
                 if label=="cat":
                     logpi = F.cross_entropy(logits["cat"],rep_ac(api["cat"]),weight = None, reduction = 'none')
                 elif label=="mouse":
@@ -76,16 +70,10 @@ def A2C(env:grid,
                     exit()
                 #continue
                 #update actor
-                if isinstance(agent,Mouse):
-                    nploss = agent.updatePi(
-                                    api["mouse"],
-                                    logpi,
-                                    sample["state"]["mouse"])
-                else:
-                    nploss = agent.updatePi(
-                                    api,
-                                    logpi,
-                                    sample["state"])
+                nploss = agent.updatePi(
+                                api,
+                                logpi,
+                                sample["state"])
                 #exit()
                 loss_pi[label].append(nploss.item())
                 loss_Q[label].append(loss_.item())
