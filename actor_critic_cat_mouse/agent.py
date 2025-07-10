@@ -4,7 +4,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch
 from rep import Representation_action, Representation
-from env import grid
+from env2 import grid
 import numpy as np
 import os
 from buffer import Buffer
@@ -17,6 +17,7 @@ class Tool:
         return self.q(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
     def Qf_target(self,state:dict,actions:dict):
         return self.q_target(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
+        #return self.q_target(state["cat"],state["mouse"],self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
     def update_target_net(self):
         for (name_q, param_q),(name_q_target,param_q_target) in zip(self.q.state_dict().items(),self.q_target.state_dict().items()):
             param_q_target.copy_(self.tau*param_q + (1.0 - self.tau)*param_q_target)

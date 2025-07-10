@@ -32,11 +32,11 @@ def test(mouse:Mouse,cat:Mouse,env:grid):
 
 if __name__=="__main__":
     testmode = True
-    start = 2000
+    start = 1200
     epsilon = .3
     gamma = .99
-    nx = 4
-    ny = 5
+    nx = 10
+    ny = 10
     # large learning rates implies more risk to local minima
     mouse_lr_pi = 1e-3
     mouse_lr_q = 1e-3
@@ -65,8 +65,8 @@ if __name__=="__main__":
         mouse.load(start)
         cat.load(start)
     if testmode:
-        mouse.epsilon = 0
-        cat.epsilon = 0
+        mouse.epsilon = 0.1
+        cat.epsilon = 0.1
         test(mouse,cat,env)
     else:
-        A2C(env,mouse,cat,batch_size,n_epochs,fact = fact,min_eps=min_eps)
+        A2C(env,mouse,cat,batch_size,n_epochs,fact = fact,min_eps=min_eps,start=0)

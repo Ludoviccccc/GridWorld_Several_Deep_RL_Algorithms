@@ -56,14 +56,10 @@ class grid:
             s_out = agent_pos
         return s_out
     def reward_cat(self):
-        #reward = (1.0)*(self.cat_pos==self.mouse_pos)# + (-1.0)*(self.cat_pos == self.cat_previous)
         reward = (-1.0)*((self.mouse_pos[0] - self.cat_pos[0])**2 + (self.mouse_pos[1] - self.cat_pos[1])**2) + (-1.0)*(self.cat_pos==self.cat_previous)
         return reward
     def reward_mouse(self):
-        reward = (-1.0)*((self.target_mouse[0] - self.mouse_pos[0])**2 + (self.target_mouse[1] - self.mouse_pos[1])**2) + (-1.0)*(self.mouse_pos==self.target_mouse)
-        reward += (+1.0)*((self.mouse_pos[0] - self.cat_pos[0])**2 + (self.mouse_pos[1] - self.cat_pos[1])**2)
-        #reward = (10.0)*(self.target_mouse==self.mouse_pos)# + (-10.0)*(self.mouse_pos==self.mouse_previous)
-        reward = (1.0)*(self.target_mouse==self.mouse_pos) + -2.0*(self.mouse_pos==self.cat_pos)
+        reward = (1.0)*(self.target_mouse==self.mouse_pos) + -10.0*(self.mouse_pos==self.cat_pos)
         return reward
     def grid(self):
         s_mouse = self.mouse_pos
