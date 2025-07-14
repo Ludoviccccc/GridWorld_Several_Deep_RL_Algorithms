@@ -3,5 +3,6 @@ Actor critic for two agent.
 
 Return cat from the first episode
 ![Alt text](plot/reward_cat.png)
+
 Return mouse from the first episode
 ![Alt text](plot/reward_mouse.png)
