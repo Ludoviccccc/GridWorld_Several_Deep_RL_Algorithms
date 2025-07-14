@@ -32,36 +32,34 @@ def test(mouse:Mouse,cat:Mouse,env:grid):
 
 if __name__=="__main__":
     testmode = True
-    start = 1200
+    start = 2000
     epsilon = .3
     gamma = .99
     nx = 10
     ny = 10
     # large learning rates implies more risk to local minima
-    mouse_lr_pi = 1e-3
-    mouse_lr_q = 1e-3
-    cat_lr_pi = 1e-3
-    cat_lr_q = 1e-3
+    mouse_lr_pi = 1e-4
+    mouse_lr_q = 1e-4
+    cat_lr_pi = 1e-4
+    cat_lr_q = 1e-4
     batch_size = 32
     buffer_size = 600
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
-    K = 2
-    K_cat = 2
+    K = 4
+    K_cat = 4
     n_epochs =  2000
     loadpath = "loads"
     loadopt = "opt"
     max_steps = 30
     fact = .95
     tau = .01
-    min_eps = .1
+    min_eps = .05
 
     env = grid(nx,ny,max_steps = max_steps)
     env.reset()
     mouse = Mouse(env,epsilon = epsilon,buffer_size = buffer_size,lr_pi=mouse_lr_pi, lr_q=mouse_lr_q, tau=tau,K = K)
     cat = Cat(env,epsilon = epsilon, buffer_size = buffer_size, lr_pi=cat_lr_pi, lr_q=cat_lr_q,tau = tau,K = K_cat)
     if start>0:
-        mouse.epsilon = .1
-        cat.epsilon = .1
         mouse.load(start)
         cat.load(start)
     if testmode:

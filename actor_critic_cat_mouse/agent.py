@@ -14,10 +14,11 @@ class Tool:
         self.rep_ac = Representation_action(env.Na)
         self.rep_cl = Representation(env.Nx,env.Ny)
     def Qf(self,state:dict,actions:dict):
-        return self.q(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
+        #return self.q(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
+        return self.q(state["cat"],state["mouse"],self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
     def Qf_target(self,state:dict,actions:dict):
-        return self.q_target(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
-        #return self.q_target(state["cat"],state["mouse"],self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
+        #return self.q_target(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
+        return self.q_target(state["cat"],state["mouse"],self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
     def update_target_net(self):
         for (name_q, param_q),(name_q_target,param_q_target) in zip(self.q.state_dict().items(),self.q_target.state_dict().items()):
             param_q_target.copy_(self.tau*param_q + (1.0 - self.tau)*param_q_target)

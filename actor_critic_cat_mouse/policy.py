@@ -35,18 +35,14 @@ class policy(nn.Module):
         self.Nx = env.Nx
         self.Ny = env.Ny
         self.Na = env.Na
-        self.linear1 = nn.Linear(4,16)
+        self.linear1 = nn.Linear(2,16)
         self.linear2 = nn.Linear(16,16)
         self.linear3 = nn.Linear(16,16)
         self.linear4 = nn.Linear(16,self.Na)
         self.actv = nn.ReLU()
         self.rep_cl = Representation(self.Nx,self.Ny)
     def forward(self,s1,s2, logit =False):
-        #print("s1",s1)
-        #print("s2",s2)
-        #x = torch.cat((self.rep_cl(s1),self.rep_cl(s2)),dim=1)
-        #x = torch.cat((s1//self.Ny,s1%self.Ny,s2//self.Ny,s2%self.Ny),dim=1)
-        x = torch.Tensor([[s1[j]//self.Ny,s1[j]%self.Ny,s2[j]//self.Ny,s2[j]%self.Ny] for j in range(len(s1))])
+        x = torch.Tensor([[s1[j]//self.Ny  - s2[j]//self.Ny,s1[j]%self.Ny - s2[j]%self.Ny] for j in range(len(s1))])
         #print("x", x.shape)
 
         #x = self.rep_cl(s1)
