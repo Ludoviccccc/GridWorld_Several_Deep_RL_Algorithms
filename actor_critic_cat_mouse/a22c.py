@@ -28,8 +28,7 @@ def A2C(env:grid,
         #step 1
         env.reset()
         s_tab = {"cat":env.state_cat(),"mouse": env.state_mouse()}
-        while env.terminated():
-            env.reset()
+        env.reset()
         print(f"episode {j}/{n_episodes}")
         n = 0
         return_cat = torch.Tensor([0])

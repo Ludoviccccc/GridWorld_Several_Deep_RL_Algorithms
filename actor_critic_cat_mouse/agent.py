@@ -1,5 +1,5 @@
-from policy import policy, policy2
-from Qfunc import Q,Q2
+from policy import policy
+from Qfunc import Q
 import torch.optim as optim
 import torch.nn.functional as F
 import torch
@@ -15,10 +15,10 @@ class Tool:
         self.rep_cl = Representation(env.Nx,env.Ny)
     def Qf(self,state:dict,actions:dict):
         #return self.q(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
-        return self.q(state["cat"],state["mouse"],self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
+        return self.q(state["cat"],state["mouse"],actions["cat"],actions["mouse"])
     def Qf_target(self,state:dict,actions:dict):
         #return self.q_target(self.rep_cl(state["cat"]),self.rep_cl(state["mouse"]),self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
-        return self.q_target(state["cat"],state["mouse"],self.rep_ac(actions["cat"]),self.rep_ac(actions["mouse"]))
+        return self.q_target(state["cat"],state["mouse"],actions["cat"],actions["mouse"])
     def update_target_net(self):
         for (name_q, param_q),(name_q_target,param_q_target) in zip(self.q.state_dict().items(),self.q_target.state_dict().items()):
             param_q_target.copy_(self.tau*param_q + (1.0 - self.tau)*param_q_target)
@@ -83,11 +83,13 @@ class Mouse(Tool):
     def load(self,start:int):
         self.q.load_state_dict(torch.load(os.path.join(self.loadpath,f"q_1_load_{start}.pt"),weights_only=True))
         self.p.load_state_dict(torch.load(os.path.join(self.loadpath,f"pi_1_load_{start}.pt"),weights_only=True))
+        self.optimizerpi.load_state_dict(torch.load(os.path.join(self.optpath,f"opt_1_pi_load_{start}.pt")))
+        self.optimizer_q.load_state_dict(torch.load(os.path.join(self.optpath,f"opt_1_q_load_{start}.pt")))
     def save(self,j):
         torch.save(self.p.state_dict(), os.path.join(self.loadpath,f"pi_1_load_{j}.pt"))
         torch.save(self.optimizerpi.state_dict(), os.path.join(self.optpath,f"opt_1_pi_load_{j}.pt"))
         torch.save(self.q.state_dict(), os.path.join(self.loadpath,f"q_1_load_{j}.pt"))
-        torch.save(self.optimizer_q.state_dict(), os.path.join(self.optpath,f"opt_1_pi_load_{j}.pt"))
+        torch.save(self.optimizer_q.state_dict(), os.path.join(self.optpath,f"opt_1_q_load_{j}.pt"))
 class Cat(Tool):
     def __init__(self,
                 env:grid,
@@ -120,8 +122,10 @@ class Cat(Tool):
     def load(self,start:int):
         self.q.load_state_dict(torch.load(os.path.join(self.loadpath,f"q_0_load_{start}.pt"),weights_only=True))
         self.p.load_state_dict(torch.load(os.path.join(self.loadpath,f"pi_0_load_{start}.pt"),weights_only=True))
+        #self.optimizerpi.load_state_dict(torch.load(os.path.join(self.optpath,f"opt_0_pi_load_{start}.pt")))
+        #self.optimizer_q.load_state_dict(torch.load(os.path.join(self.optpath,f"opt_0_q_load_{start}.pt")))
     def save(self,j):
         torch.save(self.p.state_dict(), os.path.join(self.loadpath,f"pi_0_load_{j}.pt"))
         torch.save(self.optimizerpi.state_dict(), os.path.join(self.optpath,f"opt_0_pi_load_{j}.pt"))
         torch.save(self.q.state_dict(), os.path.join(self.loadpath,f"q_0_load_{j}.pt"))
-        torch.save(self.optimizer_q.state_dict(), os.path.join(self.optpath,f"opt_0_pi_load_{j}.pt"))
+        torch.save(self.optimizer_q.state_dict(), os.path.join(self.optpath,f"opt_0_q_load_{j}.pt"))

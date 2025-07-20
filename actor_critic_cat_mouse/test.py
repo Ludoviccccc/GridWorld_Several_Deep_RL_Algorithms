@@ -32,7 +32,7 @@ def test(mouse:Mouse,cat:Mouse,env:grid):
 
 if __name__=="__main__":
     testmode = True
-    start = 2000
+    start = 500
     epsilon = .3
     gamma = .99
     nx = 10
@@ -43,17 +43,17 @@ if __name__=="__main__":
     cat_lr_pi = 1e-4
     cat_lr_q = 1e-4
     batch_size = 32
-    buffer_size = 600
+    buffer_size = 5000
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
     K = 4
     K_cat = 4
-    n_epochs =  2000
+    n_epochs =  500
     loadpath = "loads"
     loadopt = "opt"
-    max_steps = 30
+    max_steps = 25
     fact = .95
     tau = .01
-    min_eps = .05
+    min_eps = .01
 
     env = grid(nx,ny,max_steps = max_steps)
     env.reset()
@@ -63,8 +63,8 @@ if __name__=="__main__":
         mouse.load(start)
         cat.load(start)
     if testmode:
-        mouse.epsilon = 0.1
-        cat.epsilon = 0.1
+        mouse.epsilon = 0.
+        cat.epsilon = 0.
         test(mouse,cat,env)
     else:
         A2C(env,mouse,cat,batch_size,n_epochs,fact = fact,min_eps=min_eps,start=0)
