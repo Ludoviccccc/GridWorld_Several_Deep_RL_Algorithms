@@ -13,7 +13,7 @@ class grid:
         self.mouse_pos = (np.random.randint(0,self.Nx), np.random.randint(0,self.Ny))
         self.target_idx = 10
         self.walls = [2,6,14,17,21,24,27,41,53]
-        self.walls = []
+#        self.walls = []
         self.target_mouse = (self.target_idx//self.Ny,self.target_idx%self.Ny)
         self.max_steps = max_steps
     def reset(self):

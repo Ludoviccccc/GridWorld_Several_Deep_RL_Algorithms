@@ -31,23 +31,23 @@ def test(mouse:Mouse,cat:Mouse,env:grid):
         plt.close()
 
 if __name__=="__main__":
-    testmode = True
-    start = 500
+    testmode = False
+    start = 2000
     epsilon = .3
     gamma = .99
     nx = 10
     ny = 10
     # large learning rates implies more risk to local minima
-    mouse_lr_pi = 1e-4
-    mouse_lr_q = 1e-4
-    cat_lr_pi = 1e-4
-    cat_lr_q = 1e-4
-    batch_size = 32
+    mouse_lr_pi = 1e-3
+    mouse_lr_q = 1e-3
+    cat_lr_pi = 1e-3
+    cat_lr_q = 1e-3
+    batch_size = 64
     buffer_size = 5000
     # learn Q with K iteration, allows more stability. We choose K=1 bc the system is simple.
-    K = 4
-    K_cat = 4
-    n_epochs =  500
+    K = 1
+    K_cat = 1
+    n_epochs =  2000
     loadpath = "loads"
     loadopt = "opt"
     max_steps = 25
